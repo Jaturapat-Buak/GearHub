@@ -257,18 +257,19 @@ app.get('/dispatch', isAuthenticated, (req, res) => {
     });
 });
 
-app.post('/dispatch-stock', (req, res) => {
+app.post('/dispatch-stock', isAuthenticated, (req, res) => {
     const { product_id, quantity, reason } = req.body;
-    db.get("SELECT warehouse_qty FROM stock WHERE product_id = ?", [product_id], (err, row) => {
-        if (row && row.warehouse_qty >= quantity) {
-            db.run(`UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?`, [quantity, product_id], function(err) {
-                if (err) return res.status(500).send("เบิกสินค้าไม่สำเร็จ");
-                logTransaction(product_id, 'dispatch', quantity, `เบิกออกเหตุผล: ${reason}`);
-                res.redirect('/');
-            });
-        } else {
-            res.status(400).send("จำนวนสินค้าในคลังไม่เพียงพอ");
-        }
+    const user_id = req.session.user.user_id;
+
+    db.get("SELECT MAX(request_id) as maxId FROM request_from_sales", (err, row) => {
+        const nextId = (row && row.maxId) ? row.maxId + 1 : 1;
+        const sql = `INSERT INTO request_from_sales (request_id, product_id, requested_by, quantity, status, request_date, reason) 
+                     VALUES (?, ?, ?, ?, 'pending', datetime('now', 'localtime'), ?)`;
+
+        db.run(sql, [nextId, product_id, user_id, quantity, reason], (err) => {
+            if (err) return res.status(500).send("Error creating request: " + err.message);
+            res.redirect('/requests');
+        });
     });
 });
 
@@ -345,7 +346,7 @@ app.post('/users/edit/:id', (req, res) => {
     const { username, full_name, role } = req.body;
     const { id } = req.params;
     const sql = `UPDATE users SET username = ?, full_name = ?, role = ? WHERE user_id = ?`;
-    
+
     db.run(sql, [username, full_name, role, id], (err) => {
         if (err) return res.status(500).send("ไม่สามารถแก้ไขข้อมูลได้");
         res.redirect('/users');
@@ -356,6 +357,64 @@ app.get('/users/delete/:id', (req, res) => {
     const { id } = req.params;
     db.run("DELETE FROM users WHERE user_id = ?", [id], (err) => {
         res.redirect('/users');
+    });
+});
+
+// --- หน้า Requests ---
+app.get("/requests", isAuthenticated, (req, res) => {
+  const sql = `
+    SELECT r.*, p.product_name
+    FROM request_from_sales r
+    LEFT JOIN products p
+    ON r.product_id = p.product_id
+    ORDER BY r.request_date DESC
+    `;
+  db.all(sql, [], (err, rows) => {
+    res.render("requests", {
+      title: "คำขอเบิกสินค้า",
+      requests: rows,
+      currentRoute: "/requests",
+    });
+  });
+});
+
+app.post('/approve-request/:id', isAuthenticated, (req, res) => {
+    const requestId = req.params.id;
+
+    db.get("SELECT * FROM request_from_sales WHERE request_id = ?", [requestId], (err, request) => {
+        if (err || !request) {
+            console.error("หาคำขอไม่เจอ:", err);
+            return res.status(404).send("ไม่พบรายการคำขอ");
+        }
+
+        db.run("UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?", [request.quantity, request.product_id], function(err) {
+            if (err) {
+                console.error("Error อัปเดตตาราง stock:", err.message);
+                return res.status(500).send("ไม่สามารถตัดสต็อกได้: " + err.message);
+            }
+
+
+            if (typeof logTransaction === "function") {
+                logTransaction(request.product_id, 'dispatch', request.quantity, `อนุมัติเบิก #${requestId}`);
+            }
+
+            db.run("UPDATE request_from_sales SET status = 'approved' WHERE request_id = ?", [requestId], (err) => {
+                if (err) console.error("เปลี่ยนสถานะไม่สำเร็จ:", err);
+                res.redirect('/requests');
+            });
+        });
+    });
+});
+
+app.post('/decline-request/:id', isAuthenticated, (req, res) => {
+    const requestId = req.params.id;
+
+    db.run("UPDATE request_from_sales SET status = 'rejected' WHERE request_id = ?", [requestId], (err) => {
+        if (err) {
+            console.error("DEBUG: ปฏิเสธคำขอ Error ->", err);
+            return res.status(500).send("Error: " + err.message);
+        }
+        res.redirect('/requests');
     });
 });
 
