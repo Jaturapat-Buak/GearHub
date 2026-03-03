@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --sidebar-bg: #1e293b;
+    --sidebar-hover: #334155;
+    --primary-color: #0ea5e9;
+    --bg-color: #f8fafc;
+    --sidebar-width: 270px; 
+    --sidebar-collapsed-width: 70px;
+}
+
+body {
+    font-family: 'Prompt', sans-serif;
+    background-color: var(--bg-color);
+    overflow-x: hidden;
+    margin: 0;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transition: all 0.3s ease;
+    z-index: 1050;
+    overflow: visible;
+}
+
+.sidebar .brand-logo {
+    height: 70px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    white-space: nowrap;
+}
+
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.6rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    transition: 0.2s;
+}
+
+.sidebar-toggle:hover {
+    color: white;
+}
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.sidebar.collapsed .brand-logo {
+    justify-content: center;
+    padding: 0;
+}
+
+.sidebar.collapsed .logo-wrapper {
+    display: none;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #cbd5e1;
+    text-decoration: none;
+    gap: 15px;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.sidebar-menu li a:hover, .sidebar-menu li.active a {
+    background-color: var(--sidebar-hover);
+    color: white;
+    border-left: 4px solid var(--primary-color);
+}
+
+.sidebar.collapsed .sidebar-menu li a {
+    justify-content: center;
+    padding: 15px 0;
+}
+
+.sidebar.collapsed .sidebar-menu li a .menu-text {
+    display: none;
+}
+
+.sidebar-menu li a i {
+    font-size: 1.3rem;
+}
+
+.cursor-pointer:hover {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+.avatar-sm img {
+    object-fit: cover;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.expanded {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+.top-navbar {
+    background-color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+@media (max-width: 868px) {
+    .sidebar {
+        width: var(--sidebar-collapsed-width) !important;
+    }
+    
+    .sidebar .brand-logo {
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+
+    .sidebar .logo-wrapper {
+        display: flex !important;
+    }
+    .sidebar .logo-wrapper .brand-text {
+        display: none !important;
+    }
+    .sidebar .sidebar-toggle {
+        display: none !important;
+    }
+
+    .sidebar .sidebar-menu li a .menu-text {
+        display: none !important;
+    }
+
+    .sidebar-menu li a {
+        justify-content: center !important;
+        padding: 15px 0 !important;
+    }
+
+    .main-content, .main-content.expanded {
+        margin-left: var(--sidebar-collapsed-width) !important;
+        width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    }
+}
+
+.dropdown-menu {
+    border-radius: 8px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-color); 
+}
+
+.dropdown-item i {
+    font-size: 1.1rem;
+    vertical-align: middle;
+}
+
+/* การตั้งค่า Animation สำหรับรายการข้อมูล */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ปรับแต่ง User Card */
+.user-card {
+    transition: all 0.3s ease;
+    border-radius: 15px;
+    border: none;
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.avatar-wrapper .rounded-circle {
+    transition: background-color 0.3s ease;
+}
+
+.user-card:hover .avatar-wrapper .rounded-circle {
+    background-color: #e0e7ff !important; /* สีฟ้าอ่อนขึ้นเมื่อ hover */
+}
+
+/* ปรับแต่ง Modal ให้สมดุลกับพื้นที่ทำงานด้านขวา */
+@media (min-width: 992px) {
+    .modal-dialog-centered {
+        /* ขยับ Modal ให้สมดุล โดยเผื่อที่ให้ Sidebar (ปกติ 250px) */
+        margin-left: calc(250px + auto);
+        margin-right: auto;
+    }
+}
+
+/* ปรับแต่งฟอร์มใน Modal */
+.modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.modal-body .form-control, 
+.modal-body .form-select {
+    padding: 10px 15px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.modal-body .form-control:focus, 
+.modal-body .form-select:focus {
+    background-color: #fff;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+}
+
+/* Badge สีพาสเทล */
+.badge.rounded-pill {
+    font-weight: 500;
+    padding: 0.5em 1.2em;
+}

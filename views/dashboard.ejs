@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Gear Hub - <%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <%- include('partials/sidebar') %>
+    <div id="main-content" class="main-content">
+        <%- include('partials/navbar') %>
+        <div class="container-fluid p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6>สินค้าทั้งหมด</h6>
+                            <h2 class="fw-bold"><%= stats.total %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-success">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6>รับเข้าวันนี้</h6>
+                            <h2 class="fw-bold"><%= stats.received %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-danger">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6>เบิกออกวันนี้</h6>
+                            <h2 class="fw-bold"><%= stats.dispatched %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-warning">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h6>สินค้าใกล้หมด</h6>
+                            <h2 class="fw-bold"><%= stats.lowStock %></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm p-4 h-100">
+                        <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history"></i> ประวัติรายการล่าสุด </h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>วัน-เวลา</th>
+                                        <th>รหัสสินค้า</th>
+                                        <th>สินค้า</th>
+                                        <th>ประเภท</th>
+                                        <th>จำนวน</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (typeof logs !== 'undefined' && logs.length > 0) { %>
+                                        <% logs.forEach(log => { %>
+                                            <tr>
+                                                <td><%= log.transaction_date %></td>
+                                                <td>#<%= log.product_id %></td>
+                                                <td><%= log.product_name %></td>
+                                                <td>
+                                                    <% 
+                                                        let badgeClass = 'bg-secondary';
+                                                        let typeText = 'ไม่ระบุ';
+                                                        if (log.transaction_type === 'add') {
+                                                            badgeClass = 'bg-success'; 
+                                                            typeText = 'เพิ่มใหม่'; 
+                                                        } else if (log.transaction_type === 'receive') {
+                                                            badgeClass = 'bg-primary'; 
+                                                            typeText = 'รับเข้า'; 
+                                                        } else if (log.transaction_type === 'dispatch') {
+                                                            badgeClass = 'bg-info text-dark'; 
+                                                            typeText = 'เบิกออก'; 
+                                                        } else if (log.transaction_type === 'issue') {
+                                                            badgeClass = 'bg-danger'; 
+                                                            typeText = 'ลบ'; 
+                                                        } else if (log.transaction_type === 'adjust') {
+                                                            badgeClass = 'bg-warning text-dark'; 
+                                                            typeText = 'แก้ไข'; 
+                                                        }
+                                                    %>
+                                                    <span class="badge <%= badgeClass %>">
+                                                        <%= typeText %>
+                                                    </span>
+                                                </td>
+                                                <td><%= log.quantity %> ชิ้น</td>
+                                            </tr>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <tr><td colspan="6" class="text-center text-muted">ไม่พบข้อมูลการทำรายการ</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm p-4 h-100">
+                        <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-bar-chart-steps"></i> สัดส่วนสต็อกรวม</h5>
+                        <div style="position: relative; height: 70px;"> 
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        <div id="custom-legend" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartData = <%- JSON.stringify(catStats) %>;
+        const totalInventory = <%= typeof totalInventory !== 'undefined' ? totalInventory : 0 %>;
+    </script>
+    <script src="/js/script.js"></script>
+    <script src="/js/dashboard-chart.js"></script>
+</body>
+</html>
