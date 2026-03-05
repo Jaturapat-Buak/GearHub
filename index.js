@@ -49,47 +49,35 @@ const authorize = (roles = []) => {
   };
 };
 
-function logTransaction(productId, type, qty, note, userId) {
-  const productSql = "SELECT product_name FROM products WHERE product_id = ?";
+function logTransaction(productId, productName, type, qty, note, userId) {
   const userSql = "SELECT full_name FROM users WHERE user_id = ?";
 
-  db.get(productSql, [productId], (err, product) => {
-    if (err) {
-      console.error("Fetch product error:", err.message);
-      return;
-    }
+  db.get(userSql, [userId], (err, user) => {
+    const userName = user ? user.full_name : "Unknown";
 
-    const productName = product ? product.product_name : "Unknown";
+    db.get(
+      "SELECT MAX(transaction_id) as maxId FROM stock_transactions",
+      (err, row) => {
+        const nextId = row && row.maxId ? row.maxId + 1 : 1;
 
-    db.get(userSql, [userId], (err, user) => {
-      if (err) {
-        console.error("Fetch user error:", err.message);
-        return;
-      }
+        const sql = `
+        INSERT INTO stock_transactions
+        (transaction_id, product_id, product_name, user_id, user_name, transaction_type, quantity, reference_note, transaction_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))
+        `;
 
-      const userName = user ? user.full_name : "Unknown";
-
-      db.get(
-        "SELECT MAX(transaction_id) as maxId FROM stock_transactions",
-        (err, row) => {
-          const nextId = row && row.maxId ? row.maxId + 1 : 1;
-
-          const sql = `
-          INSERT INTO stock_transactions
-          (transaction_id, product_id, product_name, user_id, user_name, transaction_type, quantity, reference_note, transaction_date)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))
-          `;
-
-          db.run(
-            sql,
-            [nextId, productId, productName, userId, userName, type, qty, note],
-            (err) => {
-              if (err) console.error("Insert log error:", err.message);
-            },
-          );
-        },
-      );
-    });
+        db.run(sql, [
+          nextId,
+          productId,
+          productName,
+          userId,
+          userName,
+          type,
+          qty,
+          note,
+        ]);
+      },
+    );
   });
 }
 
@@ -143,9 +131,18 @@ app.get("/", isAuthenticated, (req, res) => {
                         LEFT JOIN products p ON c.category_id = p.category_id 
                         LEFT JOIN stock s ON p.product_id = s.product_id 
                         GROUP BY c.category_id`,
-    recentLogs: `SELECT t.*, p.product_name FROM stock_transactions t 
-                     LEFT JOIN products p ON t.product_id = p.product_id 
-                     ORDER BY t.transaction_id DESC LIMIT 10`,
+    recentLogs: `SELECT 
+  t.transaction_id,
+  COALESCE(p.product_name, t.product_name) AS product_name,
+  t.product_id,
+  t.transaction_type,
+  t.quantity,
+  t.transaction_date
+FROM stock_transactions t
+LEFT JOIN products p 
+ON t.product_id = p.product_id
+ORDER BY t.transaction_id DESC 
+LIMIT 10`,
     totalInventory: "SELECT SUM(warehouse_qty) as total FROM stock",
   };
 
@@ -234,6 +231,7 @@ app.post("/add-product", (req, res) => {
               const userId = req.session.user.user_id;
               logTransaction(
                 nextProductId,
+                name,
                 "add",
                 stock,
                 `เพิ่มสินค้าใหม่: ${name}`,
@@ -251,11 +249,34 @@ app.post("/add-product", (req, res) => {
 app.post("/edit-product/:id", (req, res) => {
   const productId = req.params.id;
   const { name, category_id, stock, price, description } = req.body;
+
   db.get(
-    "SELECT warehouse_qty FROM stock WHERE product_id = ?",
+    `SELECT p.product_name,p.category_id,p.price,p.description,s.warehouse_qty
+     FROM products p
+     LEFT JOIN stock s ON p.product_id = s.product_id
+     WHERE p.product_id = ?`,
     [productId],
     (err, oldData) => {
-      const oldStock = oldData ? oldData.warehouse_qty : 0;
+      let changes = [];
+
+      if (oldData.product_name !== name)
+        changes.push(`ชื่อ: ${oldData.product_name} → ${name}`);
+
+      if (oldData.category_id != category_id) changes.push(`เปลี่ยนหมวดหมู่`);
+
+      if (oldData.price != price)
+        changes.push(`ราคา: ${oldData.price} → ${price}`);
+
+      if (oldData.description !== description) changes.push(`แก้ไขคำอธิบาย`);
+
+      if (oldData.warehouse_qty != stock)
+        changes.push(`จำนวน: ${oldData.warehouse_qty} → ${stock}`);
+
+      const note =
+        changes.length > 0
+          ? "แก้ไขสินค้า: " + changes.join(", ")
+          : "แก้ไขสินค้า";
+
       db.run(
         `UPDATE products SET product_name = ?, category_id = ?, price = ?, description = ? WHERE product_id = ?`,
         [name, category_id, price, description, productId],
@@ -265,13 +286,9 @@ app.post("/edit-product/:id", (req, res) => {
             [stock, productId],
             () => {
               const userId = req.session.user.user_id;
-              logTransaction(
-                productId,
-                "adjust",
-                stock,
-                `แก้ไขสินค้า: ${name}`,
-                userId,
-              );
+
+              logTransaction(productId, name, "adjust", stock, note, userId);
+
               res.redirect("/products");
             },
           );
@@ -281,31 +298,48 @@ app.post("/edit-product/:id", (req, res) => {
   );
 });
 
-app.post("/delete-product", (req, res) => {
-  const { productId } = req.body;
+app.post("/delete-product/:id", isAuthenticated, (req, res) => {
+  const productId = req.params.id;
+  const userId = req.session.user.user_id;
+
   db.get(
-    "SELECT p.product_name, s.warehouse_qty FROM products p LEFT JOIN stock s ON p.product_id = s.product_id WHERE p.product_id = ?",
+    `
+    SELECT p.product_name, c.category_name
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.category_id
+    WHERE p.product_id = ?
+  `,
     [productId],
-    (err, row) => {
-      if (row) {
-        db.run(`DELETE FROM stock WHERE product_id = ?`, [productId], () => {
-          db.run(
-            `DELETE FROM products WHERE product_id = ?`,
-            [productId],
-            () => {
-              const userId = req.session.user.user_id;
-              logTransaction(
-                productId,
-                "issue",
-                row.warehouse_qty,
-                `ลบสินค้า: ${row.product_name}`,
-                userId,
-              );
-              res.redirect("/products");
-            },
-          );
-        });
+    (err, product) => {
+      if (err || !product) {
+        return res.status(500).send("Product not found");
       }
+
+      const productName = product.product_name;
+      const categoryName = product.category_name || "Unknown";
+
+      db.run("DELETE FROM stock WHERE product_id = ?", [productId]);
+
+      db.run(
+        "DELETE FROM products WHERE product_id = ?",
+        [productId],
+        (err) => {
+          if (err) {
+            return res.status(500).send("Delete error");
+          }
+
+          logTransaction(
+            productId,
+            productName,
+            "delete",
+            0,
+            `ลบสินค้า (หมวดหมู่: ${categoryName})`,
+            userId,
+          );
+
+          res.redirect("/products");
+        },
+      );
     },
   );
 });
@@ -361,7 +395,9 @@ app.get("/receive", isAuthenticated, (req, res) => {
 
 app.post("/receive-stock", (req, res) => {
   const { product_id, quantity, supplier } = req.body;
+
   const updateStockSql = `UPDATE stock SET warehouse_qty = warehouse_qty + ? WHERE product_id = ?`;
+
   db.run(updateStockSql, [quantity, product_id], function (err) {
     if (err) return res.status(500).send("ไม่สามารถเพิ่มสต็อกได้");
 
@@ -369,18 +405,19 @@ app.post("/receive-stock", (req, res) => {
       "SELECT product_name FROM products WHERE product_id = ?",
       [product_id],
       (err, product) => {
-        const pName = product ? product.product_name : "Unknown";
-
+        const productName = product ? product.product_name : "Unknown";
         const userId = req.session.user.user_id;
+
         logTransaction(
           product_id,
+          productName,
           "receive",
           quantity,
           `รับสินค้าจาก: ${supplier}`,
           userId,
         );
 
-        res.redirect("/");
+        return res.redirect("/");
       },
     );
   });
@@ -405,20 +442,34 @@ app.get("/dispatch", isAuthenticated, (req, res) => {
 
 app.post("/dispatch-stock", isAuthenticated, (req, res) => {
   const { product_id, quantity, reason } = req.body;
+
   const user_id = req.session.user.user_id;
+  const user_name = req.session.user.full_name;
 
   db.get(
     "SELECT MAX(request_id) as maxId FROM request_from_sales",
     (err, row) => {
       const nextId = row && row.maxId ? row.maxId + 1 : 1;
-      const sql = `INSERT INTO request_from_sales (request_id, product_id, requested_by, quantity, status, request_date, reason) 
-                     VALUES (?, ?, ?, ?, 'pending', datetime('now', 'localtime'), ?)`;
 
-      db.run(sql, [nextId, product_id, user_id, quantity, reason], (err) => {
-        if (err)
-          return res.status(500).send("Error creating request: " + err.message);
-        res.redirect("/requests");
-      });
+      const sql = `
+INSERT INTO request_from_sales
+(request_id, product_id, requested_by, user_name, quantity, status, request_date, reason)
+VALUES (?, ?, ?, ?, ?, 'pending', datetime('now','localtime'), ?)
+`;
+
+      db.run(
+        sql,
+        [nextId, product_id, user_id, user_name, quantity, reason],
+        (err) => {
+          if (err) {
+            return res
+              .status(500)
+              .send("Error creating request: " + err.message);
+          }
+
+          res.redirect("/requests");
+        },
+      );
     },
   );
 });
@@ -514,12 +565,24 @@ app.get("/users/delete/:id", (req, res) => {
 // --- หน้า Requests ---
 app.get("/requests", isAuthenticated, (req, res) => {
   const sql = `
-    SELECT r.*, p.product_name
-    FROM request_from_sales r
-    LEFT JOIN products p
-    ON r.product_id = p.product_id
-    ORDER BY r.request_date DESC
-    `;
+SELECT 
+  r.*,
+  COALESCE(
+      p.product_name,
+      (
+        SELECT t.product_name
+        FROM stock_transactions t
+        WHERE t.product_id = r.product_id
+        ORDER BY t.transaction_id DESC
+        LIMIT 1
+      ),
+      'Unknown'
+  ) AS product_name
+FROM request_from_sales r
+LEFT JOIN products p
+ON r.product_id = p.product_id
+ORDER BY r.request_date DESC
+`;
   db.all(sql, [], (err, rows) => {
     res.render("requests", {
       title: "คำขอเบิกสินค้า",
@@ -537,36 +600,52 @@ app.post("/approve-request/:id", isAuthenticated, (req, res) => {
     [requestId],
     (err, request) => {
       if (err || !request) {
-        console.error("หาคำขอไม่เจอ:", err);
         return res.status(404).send("ไม่พบรายการคำขอ");
       }
 
-      db.run(
-        "UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?",
-        [request.quantity, request.product_id],
-        function (err) {
-          if (err) {
-            console.error("Error อัปเดตตาราง stock:", err.message);
-            return res.status(500).send("ไม่สามารถตัดสต็อกได้: " + err.message);
-          }
+      // ดึงชื่อสินค้าจาก product_id
+      db.get(
+        "SELECT product_name FROM products WHERE product_id = ?",
+        [request.product_id],
+        (err, product) => {
+          const productName = product ? product.product_name : "Unknown";
 
-          if (typeof logTransaction === "function") {
-            const userId = req.session.user.user_id;
-            logTransaction(
-              request.product_id,
-              "dispatch",
-              request.quantity,
-              `อนุมัติเบิก #${requestId}`,
-              userId,
-            );
-          }
+          db.get(
+            "SELECT warehouse_qty FROM stock WHERE product_id = ?",
+            [request.product_id],
+            (err, stock) => {
+              if (!stock || stock.warehouse_qty < request.quantity) {
+                return res.send("สต็อกไม่พอ");
+              }
 
-          db.run(
-            "UPDATE request_from_sales SET status = 'approved' WHERE request_id = ?",
-            [requestId],
-            (err) => {
-              if (err) console.error("เปลี่ยนสถานะไม่สำเร็จ:", err);
-              res.redirect("/requests");
+              db.run(
+                "UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?",
+                [request.quantity, request.product_id],
+                function (err) {
+                  if (err) {
+                    return res.status(500).send("ไม่สามารถตัดสต็อกได้");
+                  }
+
+                  const userId = req.session.user.user_id;
+
+                  logTransaction(
+                    request.product_id,
+                    productName,
+                    "dispatch",
+                    request.quantity,
+                    request.reason,
+                    userId,
+                  );
+
+                  db.run(
+                    "UPDATE request_from_sales SET status = 'approved' WHERE request_id = ?",
+                    [requestId],
+                    () => {
+                      res.redirect("/requests");
+                    },
+                  );
+                },
+              );
             },
           );
         },

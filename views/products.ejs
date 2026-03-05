@@ -106,12 +106,11 @@
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <form action="/delete-product" method="POST" class="d-inline" onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');">
-                                                            <input type="hidden" name="productId" value="<%= p.product_id %>">
-                                                            <button type="submit" class="dropdown-item py-2 text-danger">
-                                                                <i class="bi bi-trash text-danger me-2"></i> ลบข้อมูล
-                                                            </button>
-                                                        </form>
+                                                        <form action="/delete-product/<%= p.product_id %>" method="POST" class="d-inline" onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');">
+    <button type="submit" class="dropdown-item py-2 text-danger">
+        <i class="bi bi-trash text-danger me-2"></i> ลบข้อมูล
+    </button>
+</form>
                                                     </li>
                                                 </ul>
                                             </div>
