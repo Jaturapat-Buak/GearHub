@@ -218,6 +218,9 @@ LIMIT 10`,
 app.get("/products", authorize(["admin", "warehouse", "sales"]), (req, res) => {
   const search = req.query.search || "";
   const categoryId = req.query.category || "";
+
+  const sort = req.query.sort || "product_id";
+  const order = req.query.order === "desc" ? "DESC" : "ASC";
   db.all(
     "SELECT category_id, category_name FROM categories ORDER BY category_id ASC",
     [],
@@ -234,7 +237,17 @@ app.get("/products", authorize(["admin", "warehouse", "sales"]), (req, res) => {
         sql += " AND p.category_id = ?";
         params.push(categoryId);
       }
-      sql += " ORDER BY p.category_id ASC, p.product_id ASC";
+      const validSort = {
+        id: "p.product_id",
+        name: "p.product_name",
+        category: "c.category_name",
+        stock: "s.warehouse_qty",
+        price: "p.price",
+      };
+
+      const sortColumn = validSort[sort] || "p.product_id";
+
+      sql += ` ORDER BY ${sortColumn} ${order}`;
       db.all(sql, params, (err, rows) => {
         res.render("products", {
           title: "สินค้าทั้งหมด",
@@ -243,6 +256,8 @@ app.get("/products", authorize(["admin", "warehouse", "sales"]), (req, res) => {
           searchQuery: search,
           selectedCategory: categoryId,
           currentRoute: "/products",
+          sort: sort,
+          order: order,
         });
       });
     },

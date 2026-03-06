@@ -106,17 +106,50 @@
 
                         <table class="table table-hover mb-0 align-middle">
 
-                            <thead class="table-light text-muted sticky-top">
-                                <tr>
-                                    <th>รหัสสินค้า (ID)</th>
-                                    <th>ชื่อสินค้า</th>
-                                    <th>หมวดหมู่</th>
-                                    <th class="text-center">จำนวนคงเหลือ</th>
-                                    <th>สถานะสต็อก</th>
-                                    <th class="text-end px-4">ราคา</th>
-                                    <th class="text-center">จัดการ</th>
-                                </tr>
-                            </thead>
+                            <thead class="table-light sticky-top">
+<tr>
+
+<th>
+<a class="table-sort" href="/products?sort=id&order=<%= order === 'ASC' ? 'desc' : 'asc' %>">
+รหัสสินค้า
+<i class="bi bi-arrow-down-up ms-1"></i>
+</a>
+</th>
+
+<th>
+<a class="table-sort" href="/products?sort=name&order=<%= order === 'ASC' ? 'desc' : 'asc' %>">
+ชื่อสินค้า
+<i class="bi bi-arrow-down-up ms-1"></i>
+</a>
+</th>
+
+<th>
+<a class="table-sort" href="/products?sort=category&order=<%= order === 'ASC' ? 'desc' : 'asc' %>">
+หมวดหมู่
+<i class="bi bi-arrow-down-up ms-1"></i>
+</a>
+</th>
+
+<th class="text-center">
+<a class="table-sort" href="/products?sort=stock&order=<%= order === 'ASC' ? 'desc' : 'asc' %>">
+จำนวนคงเหลือ
+<i class="bi bi-arrow-down-up ms-1"></i>
+</a>
+</th>
+
+<th>สถานะสต็อก</th>
+
+<th class="text-center">
+<a class="table-sort" href="/products?sort=price&order=<%= order === 'ASC' ? 'desc' : 'asc' %>">
+ราคา
+<i class="bi bi-arrow-down-up ms-1"></i>
+</a>
+</th>
+
+<th class="text-center">จัดการ</th>
+
+</tr>
+</thead>
 
 
 
@@ -176,7 +209,7 @@
                                     </td>
 
 
-                                    <td class="text-end px-4">
+                                    <td class="text-center fw-semibold">
                                         $<%= (p.price || 0).toLocaleString() %>
                                     </td>
 
