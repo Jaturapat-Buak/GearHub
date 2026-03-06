@@ -132,16 +132,14 @@ app.get("/", isAuthenticated, (req, res) => {
                         LEFT JOIN stock s ON p.product_id = s.product_id 
                         GROUP BY c.category_id`,
     recentLogs: `SELECT 
-  t.transaction_id,
-  COALESCE(p.product_name, t.product_name) AS product_name,
-  t.product_id,
-  t.transaction_type,
-  t.quantity,
-  t.transaction_date
-FROM stock_transactions t
-LEFT JOIN products p 
-ON t.product_id = p.product_id
-ORDER BY t.transaction_id DESC 
+  transaction_id,
+  product_name,
+  product_id,
+  transaction_type,
+  quantity,
+  transaction_date
+FROM stock_transactions
+ORDER BY transaction_id DESC
 LIMIT 10`,
     totalInventory: "SELECT SUM(warehouse_qty) as total FROM stock",
   };
@@ -447,27 +445,43 @@ app.post("/dispatch-stock", isAuthenticated, (req, res) => {
   const user_name = req.session.user.full_name;
 
   db.get(
-    "SELECT MAX(request_id) as maxId FROM request_from_sales",
-    (err, row) => {
-      const nextId = row && row.maxId ? row.maxId + 1 : 1;
+    "SELECT product_name FROM products WHERE product_id = ?",
+    [product_id],
+    (err, product) => {
+      const productName = product ? product.product_name : "Unknown";
 
-      const sql = `
-INSERT INTO request_from_sales
-(request_id, product_id, requested_by, user_name, quantity, status, request_date, reason)
-VALUES (?, ?, ?, ?, ?, 'pending', datetime('now','localtime'), ?)
-`;
+      db.get(
+        "SELECT MAX(request_id) as maxId FROM request_from_sales",
+        (err, row) => {
+          const nextId = row && row.maxId ? row.maxId + 1 : 1;
 
-      db.run(
-        sql,
-        [nextId, product_id, user_id, user_name, quantity, reason],
-        (err) => {
-          if (err) {
-            return res
-              .status(500)
-              .send("Error creating request: " + err.message);
-          }
+          const sql = `
+          INSERT INTO request_from_sales
+          (request_id, product_id, product_name, requested_by, user_name, quantity, status, request_date, reason)
+          VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now','localtime'), ?)
+          `;
 
-          res.redirect("/requests");
+          db.run(
+            sql,
+            [
+              nextId,
+              product_id,
+              productName,
+              user_id,
+              user_name,
+              quantity,
+              reason,
+            ],
+            (err) => {
+              if (err) {
+                return res
+                  .status(500)
+                  .send("Error creating request: " + err.message);
+              }
+
+              res.redirect("/requests");
+            },
+          );
         },
       );
     },
@@ -566,22 +580,17 @@ app.get("/users/delete/:id", (req, res) => {
 app.get("/requests", isAuthenticated, (req, res) => {
   const sql = `
 SELECT 
-  r.*,
-  COALESCE(
-      p.product_name,
-      (
-        SELECT t.product_name
-        FROM stock_transactions t
-        WHERE t.product_id = r.product_id
-        ORDER BY t.transaction_id DESC
-        LIMIT 1
-      ),
-      'Unknown'
-  ) AS product_name
-FROM request_from_sales r
-LEFT JOIN products p
-ON r.product_id = p.product_id
-ORDER BY r.request_date DESC
+  request_id,
+  product_id,
+  product_name,
+  requested_by,
+  user_name,
+  quantity,
+  status,
+  request_date,
+  reason
+FROM request_from_sales
+ORDER BY request_date DESC;
 `;
   db.all(sql, [], (err, rows) => {
     res.render("requests", {
