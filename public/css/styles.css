@@ -5,9 +5,13 @@
     --sidebar-hover: #334155;
     --primary-color: #0ea5e9;
     --bg-color: #f8fafc;
-    --sidebar-width: 270px; 
+    --sidebar-width: 270px;
     --sidebar-collapsed-width: 70px;
 }
+
+/* =========================
+   Base Layout
+========================= */
 
 body {
     font-family: 'Prompt', sans-serif;
@@ -15,6 +19,10 @@ body {
     overflow-x: hidden;
     margin: 0;
 }
+
+/* =========================
+   Sidebar
+========================= */
 
 .sidebar {
     width: var(--sidebar-width);
@@ -28,6 +36,12 @@ body {
     z-index: 1050;
     overflow: visible;
 }
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+/* Brand */
 
 .sidebar .brand-logo {
     height: 70px;
@@ -47,6 +61,17 @@ body {
     white-space: nowrap;
 }
 
+.sidebar.collapsed .brand-logo {
+    justify-content: center;
+    padding: 0;
+}
+
+.sidebar.collapsed .logo-wrapper {
+    display: none;
+}
+
+/* Toggle Button */
+
 .sidebar-toggle {
     background: transparent;
     border: none;
@@ -62,18 +87,9 @@ body {
     color: white;
 }
 
-.sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
-}
-
-.sidebar.collapsed .brand-logo {
-    justify-content: center;
-    padding: 0;
-}
-
-.sidebar.collapsed .logo-wrapper {
-    display: none;
-}
+/* =========================
+   Sidebar Menu
+========================= */
 
 .sidebar-menu {
     list-style: none;
@@ -92,10 +108,15 @@ body {
     white-space: nowrap;
 }
 
-.sidebar-menu li a:hover, .sidebar-menu li.active a {
+.sidebar-menu li a:hover,
+.sidebar-menu li.active a {
     background-color: var(--sidebar-hover);
     color: white;
     border-left: 4px solid var(--primary-color);
+}
+
+.sidebar-menu li a i {
+    font-size: 1.3rem;
 }
 
 .sidebar.collapsed .sidebar-menu li a {
@@ -107,18 +128,22 @@ body {
     display: none;
 }
 
-.sidebar-menu li a i {
-    font-size: 1.3rem;
-}
+/* =========================
+   Misc UI
+========================= */
 
 .cursor-pointer:hover {
-    background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 8px;
 }
 
 .avatar-sm img {
     object-fit: cover;
 }
+
+/* =========================
+   Main Content
+========================= */
 
 .main-content {
     margin-left: var(--sidebar-width);
@@ -130,20 +155,29 @@ body {
     margin-left: var(--sidebar-collapsed-width);
 }
 
+/* =========================
+   Top Navbar
+========================= */
+
 .top-navbar {
     background-color: white;
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* =========================
+   Responsive
+========================= */
+
 @media (max-width: 868px) {
+
     .sidebar {
         width: var(--sidebar-collapsed-width) !important;
     }
-    
+
     .sidebar .brand-logo {
         justify-content: center !important;
         padding: 0 !important;
@@ -152,9 +186,11 @@ body {
     .sidebar .logo-wrapper {
         display: flex !important;
     }
+
     .sidebar .logo-wrapper .brand-text {
         display: none !important;
     }
+
     .sidebar .sidebar-toggle {
         display: none !important;
     }
@@ -168,11 +204,16 @@ body {
         padding: 15px 0 !important;
     }
 
-    .main-content, .main-content.expanded {
+    .main-content,
+    .main-content.expanded {
         margin-left: var(--sidebar-collapsed-width) !important;
         width: calc(100% - var(--sidebar-collapsed-width)) !important;
     }
 }
+
+/* =========================
+   Dropdown
+========================= */
 
 .dropdown-menu {
     border-radius: 8px;
@@ -185,7 +226,7 @@ body {
 }
 
 .dropdown-item:hover {
-    background-color: var(--bg-color); 
+    background-color: var(--bg-color);
 }
 
 .dropdown-item i {
@@ -193,19 +234,27 @@ body {
     vertical-align: middle;
 }
 
-/* การตั้งค่า Animation สำหรับรายการข้อมูล */
+/* =========================
+   Animation
+========================= */
+
 @keyframes fadeInUp {
+
     from {
         opacity: 0;
         transform: translateY(15px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-/* ปรับแต่ง User Card */
+/* =========================
+   User Card
+========================= */
+
 .user-card {
     transition: all 0.3s ease;
     border-radius: 15px;
@@ -214,7 +263,7 @@ body {
 
 .user-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
 }
 
 .avatar-wrapper .rounded-circle {
@@ -222,25 +271,28 @@ body {
 }
 
 .user-card:hover .avatar-wrapper .rounded-circle {
-    background-color: #e0e7ff !important; /* สีฟ้าอ่อนขึ้นเมื่อ hover */
+    background-color: #e0e7ff !important;
 }
 
-/* ปรับแต่ง Modal ให้สมดุลกับพื้นที่ทำงานด้านขวา */
+/* =========================
+   Modal
+========================= */
+
 @media (min-width: 992px) {
     .modal-dialog-centered {
-        /* ขยับ Modal ให้สมดุล โดยเผื่อที่ให้ Sidebar (ปกติ 250px) */
         margin-left: calc(250px + auto);
         margin-right: auto;
     }
 }
 
-/* ปรับแต่งฟอร์มใน Modal */
 .modal-content {
     border-radius: 20px;
     overflow: hidden;
 }
 
-.modal-body .form-control, 
+/* Form in Modal */
+
+.modal-body .form-control,
 .modal-body .form-select {
     padding: 10px 15px;
     border-radius: 10px;
@@ -249,33 +301,40 @@ body {
     transition: all 0.2s ease;
 }
 
-.modal-body .form-control:focus, 
+.modal-body .form-control:focus,
 .modal-body .form-select:focus {
     background-color: #fff;
     border-color: #0ea5e9;
     box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
 }
 
-/* Badge สีพาสเทล */
+/* =========================
+   Badge
+========================= */
+
 .badge.rounded-pill {
     font-weight: 500;
     padding: 0.5em 1.2em;
 }
 
-.table-sort{
-text-decoration:none;
-color:#495057;
-font-weight:600;
-display:flex;
-align-items:center;
-gap:4px;
+/* =========================
+   Table Sort
+========================= */
+
+.table-sort {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.table-sort:hover{
-color:#0d6efd;
+.table-sort:hover {
+    color: #0d6efd;
 }
 
-.table-sort i{
-font-size:0.8rem;
-opacity:0.6;
+.table-sort i {
+    font-size: 0.8rem;
+    opacity: 0.6;
 }

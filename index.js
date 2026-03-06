@@ -170,15 +170,15 @@ app.get("/", isAuthenticated, (req, res) => {
                         LEFT JOIN stock s ON p.product_id = s.product_id 
                         GROUP BY c.category_id`,
     recentLogs: `SELECT 
-  transaction_id,
-  product_name,
-  product_id,
-  transaction_type,
-  quantity,
-  transaction_date
-FROM stock_transactions
-ORDER BY transaction_id DESC
-LIMIT 10`,
+                  transaction_id,
+                  product_name,
+                  product_id,
+                  transaction_type,
+                  quantity,
+                  transaction_date
+                  FROM stock_transactions
+                  ORDER BY transaction_id DESC
+                  LIMIT 10`,
     totalInventory: "SELECT SUM(warehouse_qty) as total FROM stock",
   };
 
@@ -640,19 +640,19 @@ app.get("/users/delete/:id", authorize(["admin"]), (req, res) => {
 // --- หน้า Requests ---
 app.get("/requests", authorize(["admin", "warehouse"]), (req, res) => {
   const sql = `
-SELECT 
-  request_id,
-  product_id,
-  product_name,
-  requested_by,
-  user_name,
-  quantity,
-  status,
-  request_date,
-  reason
-FROM request_from_sales
-ORDER BY request_date DESC;
-`;
+      SELECT 
+        request_id,
+        product_id,
+        product_name,
+        requested_by,
+        user_name,
+        quantity,
+        status,
+        request_date,
+        reason
+      FROM request_from_sales
+      ORDER BY request_date DESC;
+      `;
   db.all(sql, [], (err, rows) => {
     res.render("requests", {
       title: "คำขอเบิกสินค้า",
