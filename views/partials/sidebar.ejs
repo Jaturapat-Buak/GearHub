@@ -1,74 +1,144 @@
 <nav id="sidebar" class="sidebar d-flex flex-column">
+
     <div class="brand-logo">
         <div class="logo-wrapper">
             <i class="bi bi-box-seam text-info fs-3"></i>
             <span class="brand-text">Gear Hub</span>
         </div>
+
         <button id="toggle-sidebar" class="sidebar-toggle">
             <i class="bi bi-list"></i>
         </button>
     </div>
 
+
     <ul class="sidebar-menu mt-3 flex-grow-1">
+
         <li class="<%= currentRoute === '/' ? 'active' : '' %>">
-            <a href="/"><i class="bi bi-columns-gap"></i> <span class="menu-text">แดชบอร์ด</span></a>
+            <a href="/">
+                <i class="bi bi-columns-gap"></i>
+                <span class="menu-text">แดชบอร์ด</span>
+            </a>
         </li>
+
+
         <% if(user.role === 'admin' || user.role === 'warehouse' || user.role === 'sales'){ %>
-<li class="<%= currentRoute === '/products' ? 'active' : '' %>">
-    <a href="/products"><i class="bi bi-box2"></i> <span class="menu-text">สินค้าทั้งหมด</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/products' ? 'active' : '' %>">
+            <a href="/products">
+                <i class="bi bi-box2"></i>
+                <span class="menu-text">สินค้าทั้งหมด</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<li class="<%= currentRoute === '/receive' ? 'active' : '' %>">
-    <a href="/receive"><i class="bi bi-box-arrow-in-down"></i> <span class="menu-text">รับสินค้าเข้า</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/receive' ? 'active' : '' %>">
+            <a href="/receive">
+                <i class="bi bi-box-arrow-in-down"></i>
+                <span class="menu-text">รับสินค้าเข้า</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin' || user.role === 'sales'){ %>
-<li class="<%= currentRoute === '/dispatch' ? 'active' : '' %>">
-    <a href="/dispatch"><i class="bi bi-box-arrow-up"></i> <span class="menu-text">เบิกสินค้า</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/dispatch' ? 'active' : '' %>">
+            <a href="/dispatch">
+                <i class="bi bi-box-arrow-up"></i>
+                <span class="menu-text">เบิกสินค้า</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<li class="<%= currentRoute === '/report' ? 'active' : '' %>">
-    <a href="/report"><i class="bi bi-clipboard2-data"></i> <span class="menu-text">รายงาน</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/report' ? 'active' : '' %>">
+            <a href="/report">
+                <i class="bi bi-clipboard2-data"></i>
+                <span class="menu-text">รายงาน</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
-    <a href="/requests"><i class="bi bi-clipboard2-check"></i> <span class="menu-text">จัดการคำขอ</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
+            <a href="/requests">
+                <i class="bi bi-clipboard2-check"></i>
+                <span class="menu-text">จัดการคำขอ</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin'){ %>
-<li class="<%= currentRoute === '/users' ? 'active' : '' %>">
-    <a href="/users"><i class="bi bi-people"></i> <span class="menu-text">จัดการผู้ใช้</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/users' ? 'active' : '' %>">
+            <a href="/users">
+                <i class="bi bi-people"></i>
+                <span class="menu-text">จัดการผู้ใช้</span>
+            </a>
+        </li>
+        <% } %>
+
+
         <% if(user.role === 'admin'){ %>
-<li class="<%= currentRoute === '/logs' ? 'active' : '' %>">
-    <a href="/logs"><i class="bi bi-card-checklist"></i> <span class="menu-text">บันทึกระบบ</span></a>
-</li>
-<% } %>
+        <li class="<%= currentRoute === '/logs' ? 'active' : '' %>">
+            <a href="/logs">
+                <i class="bi bi-card-checklist"></i>
+                <span class="menu-text">บันทึกระบบ</span>
+            </a>
+        </li>
+        <% } %>
+
     </ul>
 
+
+
     <div class="sidebar-footer border-top p-3">
+
         <div class="dropup">
-            <div class="d-flex align-items-center cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+
+            <div 
+                class="d-flex align-items-center cursor-pointer"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                style="cursor: pointer;"
+            >
+
                 <div class="avatar-sm me-2">
-                    <img src="https://ui-avatars.com/api/?name=<%= user ? user.full_name : 'User' %>&background=0ea5e9&color=fff" 
-                        class="rounded-circle" width="35" height="35" alt="user">
+                    <img 
+                        src="https://ui-avatars.com/api/?name=<%= user ? user.full_name : 'User' %>&background=0ea5e9&color=fff"
+                        class="rounded-circle"
+                        width="35"
+                        height="35"
+                        alt="user"
+                    >
                 </div>
+
                 <div class="user-info overflow-hidden">
-                    <p class="mb-0 small fw-bold text-truncate"><%= user ? user.full_name : 'Guest' %></p>
-                    <p class="mb-0 small text-truncate" style="font-size: 0.7rem;"><%= user ? user.role.toUpperCase() : '' %></p>
+                    <p class="mb-0 small fw-bold text-truncate">
+                        <%= user ? user.full_name : 'Guest' %>
+                    </p>
+                    <p class="mb-0 small text-truncate" style="font-size: 0.7rem;">
+                        <%= user ? user.role.toUpperCase() : '' %>
+                    </p>
                 </div>
+
             </div>
+
+
             <ul class="dropdown-menu shadow border-0 mb-2">
                 <li>
                     <a class="dropdown-item text-danger d-flex align-items-center" href="/logout">
-                        <i class="bi bi-box-arrow-right me-2"></i> ออกจากระบบ
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        ออกจากระบบ
                     </a>
                 </li>
             </ul>
+
         </div>
+
     </div>
+
 </nav>

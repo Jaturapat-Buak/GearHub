@@ -81,6 +81,44 @@ function logTransaction(productId, productName, type, qty, note, userId) {
   });
 }
 
+// แจ้งเตือน
+function getLowStockProducts(callback) {
+  const sql = `
+        SELECT product_id, product_name, stock
+        FROM products
+        WHERE stock <= 10
+        ORDER BY stock ASC
+    `;
+
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error(err);
+      callback([]);
+    } else {
+      callback(rows);
+    }
+  });
+}
+
+app.use((req, res, next) => {
+  const sql = `
+    SELECT 
+      p.product_id,
+      p.product_name,
+      s.warehouse_qty AS stock
+    FROM products p
+    LEFT JOIN stock s ON p.product_id = s.product_id
+    WHERE s.warehouse_qty <= 10
+    ORDER BY s.warehouse_qty ASC
+  `;
+
+  db.all(sql, [], (err, rows) => {
+    res.locals.lowStockProducts = rows || [];
+    res.locals.lowStockCount = rows ? rows.length : 0;
+    next();
+  });
+});
+
 // --- Auth Routes ---
 app.get("/login", (req, res) => {
   res.render("logins", { title: "Login", error: null });
@@ -348,7 +386,7 @@ app.post(
 
 app.get(
   "/product/view/:id",
-  authorize(["admin", "warehouse", "sale"]),
+  authorize(["admin", "warehouse", "sales"]),
   (req, res) => {
     const productId = req.params.id;
     const sql = `SELECT p.*, c.category_name, COALESCE(s.warehouse_qty, 0) AS stock 

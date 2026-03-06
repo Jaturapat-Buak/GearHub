@@ -1,63 +1,111 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <title>Gear Hub - <%= title %></title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/styles.css">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body>
 
     <%- include('partials/sidebar') %>
 
     <div id="main-content" class="main-content">
+
         <%- include('partials/navbar') %>
 
         <div class="container-fluid p-4">
-            
+
+            <!-- Search / Filter -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
+
                     <form method="GET" action="/products" class="row g-3 align-items-end" autocomplete="off">
+
                         <div class="col-md-4">
-                            <label class="form-label text-muted small fw-bold">ค้นหาชื่อสินค้า</label>
-                            <input type="text" name="search" class="form-control" placeholder="พิมพ์ชื่อสินค้า..." value="<%= searchQuery %>">
+                            <label class="form-label text-muted small fw-bold">
+                                ค้นหาชื่อสินค้า
+                            </label>
+                            <input
+                                type="text"
+                                name="search"
+                                class="form-control"
+                                placeholder="พิมพ์ชื่อสินค้า..."
+                                value="<%= searchQuery %>"
+                            >
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label text-muted small fw-bold">กรองตามหมวดหมู่</label>
+                            <label class="form-label text-muted small fw-bold">
+                                กรองตามหมวดหมู่
+                            </label>
+
                             <select name="category" class="form-select">
                                 <option value="">ทุกหมวดหมู่ทั้งหมด</option>
+
                                 <% categories.forEach(c => { %>
-                                    <option value="<%= c.category_id %>" <%= selectedCategory == c.category_id ? 'selected' : '' %>>
+                                    <option
+                                        value="<%= c.category_id %>"
+                                        <%= selectedCategory == c.category_id ? 'selected' : '' %>
+                                    >
                                         <%= c.category_name %>
                                     </option>
                                 <% }) %>
+
                             </select>
                         </div>
+
                         <div class="col-md-4">
-                            <button type="submit" class="btn btn-dark px-4"><i class="bi bi-search"></i> ค้นหา</button>
-                            <a href="/products" class="btn btn-outline-secondary">ล้างค่า</a>
+                            <button type="submit" class="btn btn-dark px-4">
+                                <i class="bi bi-search"></i> ค้นหา
+                            </button>
+
+                            <a href="/products" class="btn btn-outline-secondary">
+                                ล้างค่า
+                            </a>
                         </div>
+
                     </form>
+
                 </div>
             </div>
 
+
+
+            <!-- Product Table -->
             <div class="card border-0 shadow-sm">
+
                 <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold">รายการสินค้าในคลัง</h5>
+
                     <div class="d-flex gap-2">
                         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-    <i class="bi bi-plus-lg"></i> เพิ่มสินค้า
-</button>
-<% } %>
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addProductModal"
+                            >
+                                <i class="bi bi-plus-lg"></i> เพิ่มสินค้า
+                            </button>
+                        <% } %>
                     </div>
                 </div>
-                
+
+
+
                 <div class="card-body p-0">
+
                     <div class="table-responsive" style="max-height: 60vh;">
+
                         <table class="table table-hover mb-0 align-middle">
+
                             <thead class="table-light text-muted sticky-top">
                                 <tr>
                                     <th>รหัสสินค้า (ID)</th>
@@ -69,120 +117,314 @@
                                     <th class="text-center">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <% if(products.length === 0) { %>
-                                    <tr><td colspan="7" class="text-center py-4 text-muted">ไม่พบข้อมูลสินค้า</td></tr>
-                                <% } %>
 
-                                <% products.forEach(p => { %>
+
+
+                            <tbody>
+
+                                <% if(products.length === 0) { %>
                                     <tr>
-                                        <td class="text-muted">#<%= p.product_id %></td>
-                                        <td class="fw-bold text-primary"><%= p.product_name %></td>
-                                        <td><span class="badge bg-secondary"><%= p.category_name || 'ไม่มีหมวดหมู่' %></span></td>
-                                        <td class="text-center fw-bold"><%= p.stock %></td>
-                                        <td>
-                                            <% if(p.stock > 50) { %>
-                                                <span class="badge bg-success">พร้อมจำหน่าย</span>
-                                            <% } else if(p.stock > 0) { %>
-                                                <span class="badge bg-warning text-dark">ใกล้หมด</span>
-                                            <% } else { %>
-                                                <span class="badge bg-danger">หมดสต็อก</span>
-                                            <% } %>
-                                        </td>
-                                        <td class="text-end px-4">$<%= (p.price || 0).toLocaleString() %></td>
-                                        <td class="text-center">
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-light rounded-circle border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="window">
-                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                                    <li>
-                                                        <a class="dropdown-item py-2" href="/product/view/<%= p.product_id %>">
-                                                            <i class="bi bi-eye text-info me-2"></i> ดูรายละเอียด
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<li>
-    <a class="dropdown-item py-2" href="/product/edit/<%= p.product_id %>">
-        <i class="bi bi-pencil-square text-warning me-2"></i> แก้ไขข้อมูล
-    </a>
-</li>
-<% } %>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-<li><hr class="dropdown-divider"></li>
-<li>
-<form action="/delete-product/<%= p.product_id %>" method="POST" 
-onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');">
-<button type="submit" class="dropdown-item py-2 text-danger">
-<i class="bi bi-trash text-danger me-2"></i> ลบข้อมูล
-</button>
-</form>
-</li>
-<% } %>
-                                                </ul>
-                                            </div>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            ไม่พบข้อมูลสินค้า
                                         </td>
                                     </tr>
+                                <% } %>
+
+
+
+                                <% products.forEach(p => { %>
+
+                                <tr>
+
+                                    <td class="text-muted">
+                                        #<%= p.product_id %>
+                                    </td>
+
+                                    <td class="fw-bold text-primary">
+                                        <%= p.product_name %>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            <%= p.category_name || 'ไม่มีหมวดหมู่' %>
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center fw-bold">
+                                        <%= p.stock %>
+                                    </td>
+
+
+                                    <td>
+
+                                        <% if(p.stock > 50) { %>
+                                            <span class="badge bg-success">
+                                                พร้อมจำหน่าย
+                                            </span>
+
+                                        <% } else if(p.stock > 0) { %>
+                                            <span class="badge bg-warning text-dark">
+                                                ใกล้หมด
+                                            </span>
+
+                                        <% } else { %>
+                                            <span class="badge bg-danger">
+                                                หมดสต็อก
+                                            </span>
+                                        <% } %>
+
+                                    </td>
+
+
+                                    <td class="text-end px-4">
+                                        $<%= (p.price || 0).toLocaleString() %>
+                                    </td>
+
+
+                                    <td class="text-center">
+
+                                        <div class="dropdown">
+
+                                            <button
+                                                class="btn btn-sm btn-light rounded-circle border-0"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                data-bs-boundary="window"
+                                            >
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+
+
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+
+                                                <li>
+                                                    <a
+                                                        class="dropdown-item py-2"
+                                                        href="/product/view/<%= p.product_id %>"
+                                                    >
+                                                        <i class="bi bi-eye text-info me-2"></i>
+                                                        ดูรายละเอียด
+                                                    </a>
+                                                </li>
+
+
+
+                                                <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+                                                <li>
+                                                    <a
+                                                        class="dropdown-item py-2"
+                                                        href="/product/edit/<%= p.product_id %>"
+                                                    >
+                                                        <i class="bi bi-pencil-square text-warning me-2"></i>
+                                                        แก้ไขข้อมูล
+                                                    </a>
+                                                </li>
+                                                <% } %>
+
+
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+
+
+
+                                                <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+
+                                                <li>
+                                                    <form
+                                                        action="/delete-product/<%= p.product_id %>"
+                                                        method="POST"
+                                                        onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');"
+                                                    >
+
+                                                        <button
+                                                            type="submit"
+                                                            class="dropdown-item py-2 text-danger"
+                                                        >
+                                                            <i class="bi bi-trash text-danger me-2"></i>
+                                                            ลบข้อมูล
+                                                        </button>
+
+                                                    </form>
+                                                </li>
+
+                                                <% } %>
+
+                                            </ul>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
                                 <% }) %>
+
                             </tbody>
+
                         </table>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+
         <div class="modal-dialog modal-dialog-centered">
+
             <div class="modal-content">
+
                 <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold">เพิ่มสินค้าใหม่</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-bold">
+                        เพิ่มสินค้าใหม่
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
                 </div>
-                
+
+
+
                 <form action="/add-product" method="POST" autocomplete="off">
+
                     <div class="modal-body">
+
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">ชื่อสินค้า <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" required>
+                            <label class="form-label fw-bold text-muted small">
+                                ชื่อสินค้า <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="name"
+                                class="form-control"
+                                required
+                            >
                         </div>
+
+
+
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">รายละเอียดสินค้า (Optional)</label>
-                            <textarea name="description" class="form-control" rows="2" placeholder="กรอกรายละเอียดสินค้า..."></textarea>
+                            <label class="form-label fw-bold text-muted small">
+                                รายละเอียดสินค้า (Optional)
+                            </label>
+
+                            <textarea
+                                name="description"
+                                class="form-control"
+                                rows="2"
+                                placeholder="กรอกรายละเอียดสินค้า..."
+                            ></textarea>
                         </div>
+
+
+
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">หมวดหมู่ <span class="text-danger">*</span></label>
+
+                            <label class="form-label fw-bold text-muted small">
+                                หมวดหมู่ <span class="text-danger">*</span>
+                            </label>
+
                             <select name="category_id" class="form-select" required>
-                                <option value="" disabled selected>-- เลือกหมวดหมู่ --</option>
+
+                                <option value="" disabled selected>
+                                    -- เลือกหมวดหมู่ --
+                                </option>
+
                                 <% categories.forEach(c => { %>
-                                    <option value="<%= c.category_id %>"><%= c.category_name %></option>
+                                    <option value="<%= c.category_id %>">
+                                        <%= c.category_name %>
+                                    </option>
                                 <% }) %>
+
                             </select>
+
                         </div>
+
+
+
                         <div class="row">
+
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small">จำนวนสต็อก <span class="text-danger">*</span></label>
-                                <input type="number" name="stock" class="form-control" value="0" min="0" required>
+                                <label class="form-label fw-bold text-muted small">
+                                    จำนวนสต็อก <span class="text-danger">*</span>
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="stock"
+                                    class="form-control"
+                                    value="0"
+                                    min="0"
+                                    required
+                                >
                             </div>
+
+
+
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small">ราคา<span class="text-danger">*</span></label>
-                                <input type="number" name="price" class="form-control" step="0.01" min="0" required>
+                                <label class="form-label fw-bold text-muted small">
+                                    ราคา <span class="text-danger">*</span>
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="price"
+                                    class="form-control"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                >
                             </div>
+
                         </div>
+
                     </div>
+
+
+
                     <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> บันทึกข้อมูล</button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            ยกเลิก
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            <i class="bi bi-save"></i> บันทึกข้อมูล
+                        </button>
+
                     </div>
+
                 </form>
+
             </div>
+
         </div>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
     <script src="/js/script.js"></script>
+
 </body>
 </html>
