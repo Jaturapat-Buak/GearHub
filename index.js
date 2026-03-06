@@ -177,7 +177,7 @@ LIMIT 10`,
 });
 
 // --- หน้า Product (แสดงรายการสินค้า) ---
-app.get("/products", isAuthenticated, (req, res) => {
+app.get("/products", authorize(["admin", "warehouse", "sales"]), (req, res) => {
   const search = req.query.search || "";
   const categoryId = req.query.category || "";
   db.all(
@@ -211,7 +211,7 @@ app.get("/products", isAuthenticated, (req, res) => {
   );
 });
 
-app.post("/add-product", (req, res) => {
+app.post("/add-product", authorize(["admin", "warehouse"]), (req, res) => {
   const { name, category_id, stock, price, description } = req.body;
   db.get("SELECT MAX(product_id) as maxId FROM products", (err, row) => {
     const nextProductId = row && row.maxId ? row.maxId + 1 : 1;
@@ -244,7 +244,7 @@ app.post("/add-product", (req, res) => {
   });
 });
 
-app.post("/edit-product/:id", (req, res) => {
+app.post("/edit-product/:id", authorize(["admin", "warehouse"]), (req, res) => {
   const productId = req.params.id;
   const { name, category_id, stock, price, description } = req.body;
 
@@ -296,65 +296,73 @@ app.post("/edit-product/:id", (req, res) => {
   );
 });
 
-app.post("/delete-product/:id", isAuthenticated, (req, res) => {
-  const productId = req.params.id;
-  const userId = req.session.user.user_id;
+app.post(
+  "/delete-product/:id",
+  authorize(["admin", "warehouse"]),
+  (req, res) => {
+    const productId = req.params.id;
+    const userId = req.session.user.user_id;
 
-  db.get(
-    `
+    db.get(
+      `
     SELECT p.product_name, c.category_name
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.category_id
     WHERE p.product_id = ?
   `,
-    [productId],
-    (err, product) => {
-      if (err || !product) {
-        return res.status(500).send("Product not found");
-      }
+      [productId],
+      (err, product) => {
+        if (err || !product) {
+          return res.status(500).send("Product not found");
+        }
 
-      const productName = product.product_name;
-      const categoryName = product.category_name || "Unknown";
+        const productName = product.product_name;
+        const categoryName = product.category_name || "Unknown";
 
-      db.run("DELETE FROM stock WHERE product_id = ?", [productId]);
+        db.run("DELETE FROM stock WHERE product_id = ?", [productId]);
 
-      db.run(
-        "DELETE FROM products WHERE product_id = ?",
-        [productId],
-        (err) => {
-          if (err) {
-            return res.status(500).send("Delete error");
-          }
+        db.run(
+          "DELETE FROM products WHERE product_id = ?",
+          [productId],
+          (err) => {
+            if (err) {
+              return res.status(500).send("Delete error");
+            }
 
-          logTransaction(
-            productId,
-            productName,
-            "delete",
-            0,
-            `ลบสินค้า (หมวดหมู่: ${categoryName})`,
-            userId,
-          );
+            logTransaction(
+              productId,
+              productName,
+              "delete",
+              0,
+              `ลบสินค้า (หมวดหมู่: ${categoryName})`,
+              userId,
+            );
 
-          res.redirect("/products");
-        },
-      );
-    },
-  );
-});
+            res.redirect("/products");
+          },
+        );
+      },
+    );
+  },
+);
 
-app.get("/product/view/:id", (req, res) => {
-  const productId = req.params.id;
-  const sql = `SELECT p.*, c.category_name, COALESCE(s.warehouse_qty, 0) AS stock 
+app.get(
+  "/product/view/:id",
+  authorize(["admin", "warehouse", "sale"]),
+  (req, res) => {
+    const productId = req.params.id;
+    const sql = `SELECT p.*, c.category_name, COALESCE(s.warehouse_qty, 0) AS stock 
                  FROM products p LEFT JOIN categories c ON p.category_id = c.category_id
                  LEFT JOIN stock s ON p.product_id = s.product_id WHERE p.product_id = ?`;
-  db.get(sql, [productId], (err, product) => {
-    res.render("view-product", {
-      title: "รายละเอียดสินค้า",
-      product,
-      currentRoute: "/products",
+    db.get(sql, [productId], (err, product) => {
+      res.render("view-product", {
+        title: "รายละเอียดสินค้า",
+        product,
+        currentRoute: "/products",
+      });
     });
-  });
-});
+  },
+);
 
 app.get("/product/edit/:id", (req, res) => {
   const productId = req.params.id;
@@ -377,7 +385,7 @@ app.get("/product/edit/:id", (req, res) => {
 });
 
 // --- หน้า Receive (รับสินค้าเข้าคลัง) ---
-app.get("/receive", isAuthenticated, (req, res) => {
+app.get("/receive", authorize(["admin", "warehouse"]), (req, res) => {
   db.all(
     "SELECT product_id, product_name FROM products ORDER BY product_name ASC",
     [],
@@ -422,7 +430,7 @@ app.post("/receive-stock", (req, res) => {
 });
 
 // --- หน้า Dispatch (เบิกสินค้า) ---
-app.get("/dispatch", isAuthenticated, (req, res) => {
+app.get("/dispatch", authorize(["admin", "sales"]), (req, res) => {
   db.all(
     `SELECT p.product_id, p.product_name, s.warehouse_qty 
             FROM products p JOIN stock s ON p.product_id = s.product_id 
@@ -438,7 +446,7 @@ app.get("/dispatch", isAuthenticated, (req, res) => {
   );
 });
 
-app.post("/dispatch-stock", isAuthenticated, (req, res) => {
+app.post("/dispatch-stock", authorize(["admin", "sales"]), (req, res) => {
   const { product_id, quantity, reason } = req.body;
 
   const user_id = req.session.user.user_id;
@@ -479,7 +487,7 @@ app.post("/dispatch-stock", isAuthenticated, (req, res) => {
                   .send("Error creating request: " + err.message);
               }
 
-              res.redirect("/requests");
+              res.redirect("/dispatch");
             },
           );
         },
@@ -489,7 +497,7 @@ app.post("/dispatch-stock", isAuthenticated, (req, res) => {
 });
 
 // --- หน้า Report (สรุปข้อมูล) ---
-app.get("/report", isAuthenticated, (req, res) => {
+app.get("/report", authorize(["admin", "warehouse"]), (req, res) => {
   const queries = {
     totalValue: `SELECT SUM(p.price * s.warehouse_qty) as value 
                      FROM products p JOIN stock s ON p.product_id = s.product_id`,
@@ -531,7 +539,7 @@ app.get("/report", isAuthenticated, (req, res) => {
 });
 
 // --- หน้า Users ---
-app.get("/users", isAuthenticated, (req, res) => {
+app.get("/users", authorize(["admin"]), (req, res) => {
   db.all("SELECT * FROM users ORDER BY user_id DESC", [], (err, rows) => {
     res.render("users", {
       title: "จัดการผู้ใช้งาน",
@@ -541,7 +549,7 @@ app.get("/users", isAuthenticated, (req, res) => {
   });
 });
 
-app.post("/users/add", (req, res) => {
+app.post("/users/add", authorize(["admin"]), (req, res) => {
   const { username, full_name, role, email, password } = req.body;
 
   db.get("SELECT MAX(user_id) as maxId FROM users", (err, row) => {
@@ -558,7 +566,7 @@ app.post("/users/add", (req, res) => {
   });
 });
 
-app.post("/users/edit/:id", (req, res) => {
+app.post("/users/edit/:id", authorize(["admin"]), (req, res) => {
   const { username, full_name, role } = req.body;
   const { id } = req.params;
   const sql = `UPDATE users SET username = ?, full_name = ?, role = ? WHERE user_id = ?`;
@@ -569,7 +577,7 @@ app.post("/users/edit/:id", (req, res) => {
   });
 });
 
-app.get("/users/delete/:id", (req, res) => {
+app.get("/users/delete/:id", authorize(["admin"]), (req, res) => {
   const { id } = req.params;
   db.run("DELETE FROM users WHERE user_id = ?", [id], (err) => {
     res.redirect("/users");
@@ -577,7 +585,7 @@ app.get("/users/delete/:id", (req, res) => {
 });
 
 // --- หน้า Requests ---
-app.get("/requests", isAuthenticated, (req, res) => {
+app.get("/requests", authorize(["admin", "warehouse"]), (req, res) => {
   const sql = `
 SELECT 
   request_id,
@@ -601,86 +609,94 @@ ORDER BY request_date DESC;
   });
 });
 
-app.post("/approve-request/:id", isAuthenticated, (req, res) => {
-  const requestId = req.params.id;
+app.post(
+  "/approve-request/:id",
+  authorize(["admin", "warehouse"]),
+  (req, res) => {
+    const requestId = req.params.id;
 
-  db.get(
-    "SELECT * FROM request_from_sales WHERE request_id = ?",
-    [requestId],
-    (err, request) => {
-      if (err || !request) {
-        return res.status(404).send("ไม่พบรายการคำขอ");
-      }
+    db.get(
+      "SELECT * FROM request_from_sales WHERE request_id = ?",
+      [requestId],
+      (err, request) => {
+        if (err || !request) {
+          return res.status(404).send("ไม่พบรายการคำขอ");
+        }
 
-      // ดึงชื่อสินค้าจาก product_id
-      db.get(
-        "SELECT product_name FROM products WHERE product_id = ?",
-        [request.product_id],
-        (err, product) => {
-          const productName = product ? product.product_name : "Unknown";
+        // ดึงชื่อสินค้าจาก product_id
+        db.get(
+          "SELECT product_name FROM products WHERE product_id = ?",
+          [request.product_id],
+          (err, product) => {
+            const productName = product ? product.product_name : "Unknown";
 
-          db.get(
-            "SELECT warehouse_qty FROM stock WHERE product_id = ?",
-            [request.product_id],
-            (err, stock) => {
-              if (!stock || stock.warehouse_qty < request.quantity) {
-                return res.send("สต็อกไม่พอ");
-              }
+            db.get(
+              "SELECT warehouse_qty FROM stock WHERE product_id = ?",
+              [request.product_id],
+              (err, stock) => {
+                if (!stock || stock.warehouse_qty < request.quantity) {
+                  return res.send("สต็อกไม่พอ");
+                }
 
-              db.run(
-                "UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?",
-                [request.quantity, request.product_id],
-                function (err) {
-                  if (err) {
-                    return res.status(500).send("ไม่สามารถตัดสต็อกได้");
-                  }
+                db.run(
+                  "UPDATE stock SET warehouse_qty = warehouse_qty - ? WHERE product_id = ?",
+                  [request.quantity, request.product_id],
+                  function (err) {
+                    if (err) {
+                      return res.status(500).send("ไม่สามารถตัดสต็อกได้");
+                    }
 
-                  const userId = req.session.user.user_id;
+                    const userId = req.session.user.user_id;
 
-                  logTransaction(
-                    request.product_id,
-                    productName,
-                    "dispatch",
-                    request.quantity,
-                    request.reason,
-                    userId,
-                  );
+                    logTransaction(
+                      request.product_id,
+                      productName,
+                      "dispatch",
+                      request.quantity,
+                      request.reason,
+                      userId,
+                    );
 
-                  db.run(
-                    "UPDATE request_from_sales SET status = 'approved' WHERE request_id = ?",
-                    [requestId],
-                    () => {
-                      res.redirect("/requests");
-                    },
-                  );
-                },
-              );
-            },
-          );
-        },
-      );
-    },
-  );
-});
+                    db.run(
+                      "UPDATE request_from_sales SET status = 'approved' WHERE request_id = ?",
+                      [requestId],
+                      () => {
+                        res.redirect("/requests");
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  },
+);
 
-app.post("/decline-request/:id", isAuthenticated, (req, res) => {
-  const requestId = req.params.id;
+app.post(
+  "/decline-request/:id",
+  authorize(["admin", "warehouse"]),
+  (req, res) => {
+    const requestId = req.params.id;
 
-  db.run(
-    "UPDATE request_from_sales SET status = 'rejected' WHERE request_id = ?",
-    [requestId],
-    (err) => {
-      if (err) {
-        console.error("DEBUG: ปฏิเสธคำขอ Error ->", err);
-        return res.status(500).send("Error: " + err.message);
-      }
-      res.redirect("/requests");
-    },
-  );
-});
+    db.run(
+      "UPDATE request_from_sales SET status = 'rejected' WHERE request_id = ?",
+      [requestId],
+      (err) => {
+        if (err) {
+          console.error("DEBUG: ปฏิเสธคำขอ Error ->", err);
+          return res.status(500).send("Error: " + err.message);
+        }
+        res.redirect("/requests");
+      },
+    );
+  },
+);
 
 // --- หน้า Logs (ประวัติการทำรายการสต็อก) ---
-app.get("/logs", isAuthenticated, (req, res) => {
+app.get("/logs", authorize(["admin", "warehouse"]), (req, res) => {
   const search = req.query.search || "";
   const type = req.query.type || "";
 

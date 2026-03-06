@@ -13,27 +13,41 @@
         <li class="<%= currentRoute === '/' ? 'active' : '' %>">
             <a href="/"><i class="bi bi-columns-gap"></i> <span class="menu-text">แดชบอร์ด</span></a>
         </li>
-        <li class="<%= currentRoute === '/products' ? 'active' : '' %>">
-            <a href="/products"><i class="bi bi-box2"></i> <span class="menu-text">สินค้าทั้งหมด</span></a>
-        </li>
-        <li class="<%= currentRoute === '/receive' ? 'active' : '' %>">
-            <a href="/receive"><i class="bi bi-box-arrow-in-down"></i> <span class="menu-text">รับสินค้าเข้า</span></a>
-        </li>
-        <li class="<%= currentRoute === '/dispatch' ? 'active' : '' %>">
-            <a href="/dispatch"><i class="bi bi-box-arrow-up"></i> <span class="menu-text">เบิกสินค้า</span></a>
-        </li>
-        <li class="<%= currentRoute === '/report' ? 'active' : '' %>">
-            <a href="/report"><i class="bi bi-clipboard2-data"></i> <span class="menu-text">รายงาน</span></a>
-        </li>
-        <li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
-            <a href="/requests"><i class="bi bi-clipboard2-check"></i> <span class="menu-text">จัดการคำขอ</span></a>
-        </li>
-        <li class="<%= currentRoute === '/users' ? 'active' : '' %>">
-            <a href="/users"><i class="bi bi-people"></i> <span class="menu-text">จัดการผู้ใช้</span></a>
-        </li>
-        <li class="<%= currentRoute === '/logs' ? 'active' : '' %>">
-            <a href="/logs"><i class="bi bi-card-checklist"></i> <span class="menu-text">บันทึกระบบ</span></a>
-        </li>
+        <% if(user.role === 'admin' || user.role === 'warehouse' || user.role === 'sales'){ %>
+<li class="<%= currentRoute === '/products' ? 'active' : '' %>">
+    <a href="/products"><i class="bi bi-box2"></i> <span class="menu-text">สินค้าทั้งหมด</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<li class="<%= currentRoute === '/receive' ? 'active' : '' %>">
+    <a href="/receive"><i class="bi bi-box-arrow-in-down"></i> <span class="menu-text">รับสินค้าเข้า</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin' || user.role === 'sales'){ %>
+<li class="<%= currentRoute === '/dispatch' ? 'active' : '' %>">
+    <a href="/dispatch"><i class="bi bi-box-arrow-up"></i> <span class="menu-text">เบิกสินค้า</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<li class="<%= currentRoute === '/report' ? 'active' : '' %>">
+    <a href="/report"><i class="bi bi-clipboard2-data"></i> <span class="menu-text">รายงาน</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
+    <a href="/requests"><i class="bi bi-clipboard2-check"></i> <span class="menu-text">จัดการคำขอ</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin'){ %>
+<li class="<%= currentRoute === '/users' ? 'active' : '' %>">
+    <a href="/users"><i class="bi bi-people"></i> <span class="menu-text">จัดการผู้ใช้</span></a>
+</li>
+<% } %>
+        <% if(user.role === 'admin'){ %>
+<li class="<%= currentRoute === '/logs' ? 'active' : '' %>">
+    <a href="/logs"><i class="bi bi-card-checklist"></i> <span class="menu-text">บันทึกระบบ</span></a>
+</li>
+<% } %>
     </ul>
 
     <div class="sidebar-footer border-top p-3">

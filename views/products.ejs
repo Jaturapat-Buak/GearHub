@@ -47,9 +47,11 @@
                 <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold">รายการสินค้าในคลัง</h5>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                            <i class="bi bi-plus-lg"></i> เพิ่มสินค้า
-                        </button>
+                        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+    <i class="bi bi-plus-lg"></i> เพิ่มสินค้า
+</button>
+<% } %>
                     </div>
                 </div>
                 
@@ -100,18 +102,26 @@
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item py-2" href="/product/edit/<%= p.product_id %>">
-                                                            <i class="bi bi-pencil-square text-warning me-2"></i> แก้ไขข้อมูล
-                                                        </a>
+                                                        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<li>
+    <a class="dropdown-item py-2" href="/product/edit/<%= p.product_id %>">
+        <i class="bi bi-pencil-square text-warning me-2"></i> แก้ไขข้อมูล
+    </a>
+</li>
+<% } %>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <form action="/delete-product/<%= p.product_id %>" method="POST" class="d-inline" onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');">
-    <button type="submit" class="dropdown-item py-2 text-danger">
-        <i class="bi bi-trash text-danger me-2"></i> ลบข้อมูล
-    </button>
+                                                    <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+<li><hr class="dropdown-divider"></li>
+<li>
+<form action="/delete-product/<%= p.product_id %>" method="POST" 
+onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?');">
+<button type="submit" class="dropdown-item py-2 text-danger">
+<i class="bi bi-trash text-danger me-2"></i> ลบข้อมูล
+</button>
 </form>
-                                                    </li>
+</li>
+<% } %>
                                                 </ul>
                                             </div>
                                         </td>
