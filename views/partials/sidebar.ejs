@@ -50,7 +50,16 @@
             </a>
         </li>
         <% } %>
+        
 
+        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+        <li class="<%= currentRoute === '/stock-adjustment' ? 'active' : '' %>">
+            <a href="/stock-adjustment">
+                <i class="bi bi-sliders"></i>
+                <span class="menu-text">ปรับสต็อกสินค้า</span>
+            </a>
+        </li>
+        <% } %>
 
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
         <li class="<%= currentRoute === '/report' ? 'active' : '' %>">

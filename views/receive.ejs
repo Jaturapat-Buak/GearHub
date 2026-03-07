@@ -20,7 +20,18 @@
                         <form action="/receive-stock" method="POST" autocomplete="off">
                             <div class="mb-3">
                                 <label class="form-label">เลือกสินค้า (พิมพ์เพื่อค้นหา)</label>
-                                <input class="form-control" list="productOptions" name="product_name_input" placeholder="พิมพ์ชื่อสินค้า..." required onchange="updateId(this)">
+                                <input 
+                                    id="product_input"
+                                    class="form-control"
+                                    list="productOptions"
+                                    name="product_name_input"
+                                    placeholder="พิมพ์ชื่อสินค้า..."
+                                    oninput="validateProduct()"
+                                    required>
+                                <div id="product_error" class="form-text text-danger d-none">
+                                ไม่พบสินค้าในระบบ
+                                </div>
+
                                 <datalist id="productOptions">
                                     <% products.forEach(product => { %>
                                         <option data-id="<%= product.product_id %>" value="<%= product.product_name %>">
@@ -40,7 +51,7 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary py-2 fw-bold">บันทึกการรับสินค้า</button>
+                                <button id="submit_btn" type="submit" class="btn btn-primary py-2 fw-bold">บันทึกการรับสินค้า</button>
                                 <a href="/" class="btn btn-light py-2">ยกเลิก</a>
                             </div>
                         </form>
@@ -49,8 +60,32 @@
             </div>
         </div>
     </div>
-
     <script src="/js/script.js"></script>
     <script src="/js/receive.js"></script>
+    <script>
+        function validateProduct(){
+            const input = document.getElementById("product_input")
+            const options = document.getElementById("productOptions").options
+            const error = document.getElementById("product_error")
+            const submitBtn = document.getElementById("submit_btn")
+            const hiddenId = document.getElementById("selected_product_id")
+            let found = false
+            for(let i=0;i<options.length;i++){
+                if(options[i].value === input.value){
+                    hiddenId.value = options[i].dataset.id
+                    found = true
+                    break
+                }
+            }
+            if(found){
+                error.classList.add("d-none")
+                submitBtn.disabled = false
+            } else{
+                error.classList.remove("d-none")
+                submitBtn.disabled = true
+                hiddenId.value = ""
+            }
+        }
+    </script>
 </body>
 </html>

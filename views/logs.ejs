@@ -121,7 +121,11 @@
                       <% } %>
                     </td>
                     <td class="text-center">
-                      <%= log.quantity %>
+                      <% if (log.quantity > 0) { %>
+                        +<%= log.quantity %>
+                      <% } else { %>
+                        <%= log.quantity %>
+                      <% } %>
                     </td>
                     <td>
                       <i class="bi bi-person-circle"></i>

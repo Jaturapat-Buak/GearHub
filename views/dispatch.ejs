@@ -3,55 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <title>Gear Hub - <%= title %></title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/styles.css">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body>
-    <%- include('partials/sidebar') %>
-    <div id="main-content" class="main-content">
-        <%- include('partials/navbar') %>
-        <div class="container-fluid p-4">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card border-0 shadow-sm p-4">
-                        <h4 class="fw-bold mb-4 text-danger"><i class="bi bi-box-arrow-up"></i> เบิกสินค้าออกจากคลัง</h4>
-                        <form action="/dispatch-stock" method="POST" autocomplete="off">
-                            <div class="mb-3">
-                                <label class="form-label">เลือกสินค้าที่จะเบิก (พิมพ์เพื่อค้นหา)</label>
-                                <input class="form-control" list="productOptions" name="product_name_input" placeholder="พิมพ์ชื่อสินค้า..." required onchange="updateId(this)">
-                                <datalist id="productOptions">
-                                    <% products.forEach(product => { %>
-                                        <option data-id="<%= product.product_id %>" data-max="<%= product.warehouse_qty %>" value="<%= product.product_name %> (คงเหลือ: <%= product.warehouse_qty %>)">
-                                    <% }) %>
-                                </datalist>
-                                <input type="hidden" name="product_id" id="selected_product_id">
+
+<%- include('partials/sidebar') %>
+
+<div id="main-content" class="main-content">
+
+    <%- include('partials/navbar') %>
+
+    <div class="container-fluid p-4">
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-6">
+
+                <div class="card border-0 shadow-sm p-4">
+
+                    <h4 class="fw-bold mb-4 text-danger">
+                        <i class="bi bi-box-arrow-up"></i> เบิกสินค้าออกจากคลัง
+                    </h4>
+
+                    <form action="/dispatch-stock" method="POST" autocomplete="off">
+
+                        <!-- Product -->
+                        <div class="mb-3">
+                            <label class="form-label">เลือกสินค้าที่จะเบิก (พิมพ์เพื่อค้นหา)</label>
+
+                            <input
+                                id="product_input"
+                                class="form-control"
+                                list="productOptions"
+                                name="product_name_input"
+                                placeholder="พิมพ์ชื่อสินค้า..."
+                                oninput="validateProduct()"
+                                required
+                            >
+
+                            <div id="product_error" class="form-text text-danger d-none">
+                                ไม่พบสินค้าในระบบ
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">จำนวนที่เบิก</label>
-                                <input type="number" class="form-control" name="quantity" id="qty_input" min="1" required placeholder="0">
-                                <div id="stock_alert" class="form-text text-danger d-none">จำนวนเกินกว่าสินค้าที่มีในคลัง!</div>
-                            </div>
+                            <datalist id="productOptions">
+                                <% products.forEach(product => { %>
+                                    <option
+                                        data-id="<%= product.product_id %>"
+                                        data-max="<%= product.warehouse_qty %>"
+                                        value="<%= product.product_name %> (คงเหลือ: <%= product.warehouse_qty %>)"
+                                    >
+                                <% }) %>
+                            </datalist>
 
-                            <div class="mb-4">
-                                <label class="form-label">เหตุผลที่เบิกสินค้า</label>
-                                <textarea class="form-control" name="reason" rows="3" required placeholder=""></textarea>
-                            </div>
+                            <input type="hidden" name="product_id" id="selected_product_id">
+                        </div>
 
-                            <div class="d-grid gap-2">
-                                <button type="submit" id="submit_btn" class="btn btn-danger py-2 fw-bold">บันทึกการเบิกสินค้า</button>
-                                <a href="/" class="btn btn-light py-2">ยกเลิก</a>
+                        <!-- Quantity -->
+                        <div class="mb-3">
+                            <label class="form-label">จำนวนที่เบิก</label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                name="quantity"
+                                id="qty_input"
+                                min="1"
+                                required
+                                placeholder="0"
+                                oninput="validateQty()"
+                            >
+
+                            <div id="stock_alert" class="form-text text-danger d-none">
+                                จำนวนเกินกว่าสินค้าที่มีในคลัง!
                             </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <!-- Reason -->
+                        <div class="mb-4">
+                            <label class="form-label">เหตุผลที่เบิกสินค้า</label>
+
+                            <textarea
+                                class="form-control"
+                                name="reason"
+                                rows="3"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-grid gap-2">
+
+                            <button
+                                type="submit"
+                                id="submit_btn"
+                                class="btn btn-danger py-2 fw-bold"
+                            >
+                                บันทึกการเบิกสินค้า
+                            </button>
+
+                            <a href="/" class="btn btn-light py-2">
+                                ยกเลิก
+                            </a>
+
+                        </div>
+
+                    </form>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
-    <script src="/js/script.js"></script>
-    <script src="/js/dispatch.js"></script>
+</div>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/dispatch.js"></script>
+
+<script>
+
+let maxStock = 0
+let productValid = false
+let qtyValid = false
+
+
+function validateProduct(){
+
+    const input = document.getElementById("product_input")
+    const options = document.getElementById("productOptions").options
+    const error = document.getElementById("product_error")
+    const hiddenId = document.getElementById("selected_product_id")
+
+    productValid = false
+
+    for(let i = 0; i < options.length; i++){
+
+        if(options[i].value === input.value){
+
+            hiddenId.value = options[i].dataset.id
+            maxStock = parseInt(options[i].dataset.max)
+
+            productValid = true
+            break
+        }
+
+    }
+
+    if(productValid){
+
+        error.classList.add("d-none")
+
+    }else{
+
+        error.classList.remove("d-none")
+        hiddenId.value = ""
+
+    }
+
+    validateQty()
+    checkSubmit()
+
+}
+
+
+function validateQty(){
+
+    const qty = parseInt(document.getElementById("qty_input").value)
+    const alert = document.getElementById("stock_alert")
+
+    qtyValid = false
+
+    if(!qty){
+
+        alert.classList.add("d-none")
+        checkSubmit()
+        return
+
+    }
+
+    if(qty > maxStock){
+
+        alert.classList.remove("d-none")
+
+    }else{
+
+        alert.classList.add("d-none")
+        qtyValid = true
+
+    }
+
+    checkSubmit()
+
+}
+
+
+function checkSubmit(){
+
+    const submitBtn = document.getElementById("submit_btn")
+
+    if(productValid && qtyValid){
+
+        submitBtn.disabled = false
+
+    }else{
+
+        submitBtn.disabled = true
+
+    }
+
+}
+
+</script>
+
 </body>
 </html>

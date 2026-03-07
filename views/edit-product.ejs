@@ -38,15 +38,9 @@
                                 <% }) %>
                             </select>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold text-muted small">จำนวนสต็อก <span class="text-danger">*</span></label>
-                                <input type="number" name="stock" class="form-control" value="<%= product.stock %>" min="0" required>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold text-muted small">ราคา<span class="text-danger">*</span></label>
-                                <input type="number" name="price" class="form-control" step="0.01" value="<%= product.price %>" min="0" required>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">ราคา<span class="text-danger">*</span></label>
+                            <input type="number" name="price" class="form-control" step="0.01" value="<%= product.price %>" min="0" required>
                         </div>
                         <hr class="text-muted">
                         <div class="d-flex justify-content-end gap-2 mt-3">

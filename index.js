@@ -265,36 +265,53 @@ app.get("/products", authorize(["admin", "warehouse", "sales"]), (req, res) => {
 });
 
 app.post("/add-product", authorize(["admin", "warehouse"]), (req, res) => {
-  const { name, category_id, stock, price, description } = req.body;
+
+  const { name, category_id, price, description } = req.body;
+  const stock = 0;   // กำหนด stock เริ่มต้น
+
   db.get("SELECT MAX(product_id) as maxId FROM products", (err, row) => {
+
     const nextProductId = row && row.maxId ? row.maxId + 1 : 1;
 
     db.run(
-      `INSERT INTO products (product_id, product_name, category_id, price, description) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO products (product_id, product_name, category_id, price, description)
+       VALUES (?, ?, ?, ?, ?)`,
       [nextProductId, name, category_id, price, description],
       function (err) {
+
         db.get("SELECT MAX(stock_id) as maxStockId FROM stock", (err, sRow) => {
+
           const nextStockId = sRow && sRow.maxStockId ? sRow.maxStockId + 1 : 1;
+
           db.run(
-            `INSERT INTO stock (stock_id, product_id, warehouse_qty) VALUES (?, ?, ?)`,
+            `INSERT INTO stock (stock_id, product_id, warehouse_qty)
+             VALUES (?, ?, ?)`,
             [nextStockId, nextProductId, stock],
             function (err) {
+
               const userId = req.session.user.user_id;
+
               logTransaction(
                 nextProductId,
                 name,
                 "add",
                 stock,
                 `เพิ่มสินค้าใหม่: ${name}`,
-                userId,
+                userId
               );
+
               res.redirect("/products");
-            },
+
+            }
           );
+
         });
-      },
+
+      }
     );
+
   });
+
 });
 
 app.post("/edit-product/:id", authorize(["admin", "warehouse"]), (req, res) => {
@@ -320,9 +337,6 @@ app.post("/edit-product/:id", authorize(["admin", "warehouse"]), (req, res) => {
 
       if (oldData.description !== description) changes.push(`แก้ไขคำอธิบาย`);
 
-      if (oldData.warehouse_qty != stock)
-        changes.push(`จำนวน: ${oldData.warehouse_qty} → ${stock}`);
-
       const note =
         changes.length > 0
           ? "แก้ไขสินค้า: " + changes.join(", ")
@@ -332,22 +346,16 @@ app.post("/edit-product/:id", authorize(["admin", "warehouse"]), (req, res) => {
         `UPDATE products SET product_name = ?, category_id = ?, price = ?, description = ? WHERE product_id = ?`,
         [name, category_id, price, description, productId],
         () => {
-          db.run(
-            `UPDATE stock SET warehouse_qty = ? WHERE product_id = ?`,
-            [stock, productId],
-            () => {
-              const userId = req.session.user.user_id;
+            const userId = req.session.user.user_id;
+            logTransaction(productId, name, "edit", 0, note, userId);
+            res.redirect("/products");
+          },
+        );
+      },
+    );
+  },
+);
 
-              logTransaction(productId, name, "adjust", stock, note, userId);
-
-              res.redirect("/products");
-            },
-          );
-        },
-      );
-    },
-  );
-});
 
 app.post(
   "/delete-product/:id",
@@ -455,31 +463,43 @@ app.get("/receive", authorize(["admin", "warehouse"]), (req, res) => {
 app.post("/receive-stock", (req, res) => {
   const { product_id, quantity, supplier } = req.body;
 
-  const updateStockSql = `UPDATE stock SET warehouse_qty = warehouse_qty + ? WHERE product_id = ?`;
+  if (!product_id || !quantity || quantity <= 0) {
+    return res.status(400).send("ข้อมูลไม่ถูกต้อง");
+  }
 
-  db.run(updateStockSql, [quantity, product_id], function (err) {
-    if (err) return res.status(500).send("ไม่สามารถเพิ่มสต็อกได้");
+  // ตรวจสอบว่ามี product นี้จริงไหม
+  db.get(
+    "SELECT product_name FROM products WHERE product_id = ?",
+    [product_id],
+    (err, product) => {
+      if (err) return res.status(500).send("Database error");
 
-    db.get(
-      "SELECT product_name FROM products WHERE product_id = ?",
-      [product_id],
-      (err, product) => {
-        const productName = product ? product.product_name : "Unknown";
+      if (!product) {
+        return res.status(400).send("ไม่พบสินค้าในระบบ กรุณาเพิ่มสินค้าในหน้า Products ก่อน");
+      }
+
+      // ถ้ามี product จริง -> เพิ่ม stock
+      const updateStockSql =
+        "UPDATE stock SET warehouse_qty = warehouse_qty + ? WHERE product_id = ?";
+
+      db.run(updateStockSql, [quantity, product_id], function (err) {
+        if (err) return res.status(500).send("ไม่สามารถเพิ่มสต็อกได้");
+
         const userId = req.session.user.user_id;
 
         logTransaction(
           product_id,
-          productName,
+          product.product_name,
           "receive",
           quantity,
           `รับสินค้าจาก: ${supplier}`,
-          userId,
+          userId
         );
 
-        return res.redirect("/");
-      },
-    );
-  });
+        res.redirect("/");
+      });
+    }
+  );
 });
 
 // --- หน้า Dispatch (เบิกสินค้า) ---
@@ -501,51 +521,53 @@ app.get("/dispatch", authorize(["admin", "sales"]), (req, res) => {
 
 app.post("/dispatch-stock", authorize(["admin", "sales"]), (req, res) => {
   const { product_id, quantity, reason } = req.body;
-
   const user_id = req.session.user.user_id;
   const user_name = req.session.user.full_name;
 
+  // เช็คจำนวนสินค้าในคลัง
   db.get(
-    "SELECT product_name FROM products WHERE product_id = ?",
+    "SELECT p.product_name, s.warehouse_qty FROM products p JOIN stock s ON p.product_id = s.product_id WHERE p.product_id = ?",
     [product_id],
-    (err, product) => {
-      const productName = product ? product.product_name : "Unknown";
+    (err, row) => {
+      if (err) return res.status(500).send("Database error");
 
+      if (!row) return res.status(404).send("ไม่พบสินค้า");
+
+      const productName = row.product_name;
+      const currentStock = row.warehouse_qty;
+
+      // ❗ ถ้าขอเบิกมากกว่าที่มี
+      if (parseInt(quantity) > currentStock) {
+        return res.send(
+          `<script>alert("สินค้าในคลังไม่พอ (มี ${currentStock})"); window.location='/dispatch';</script>`
+        );
+      }
+
+      // ถ้าจำนวนพอ → สร้าง request
       db.get(
         "SELECT MAX(request_id) as maxId FROM request_from_sales",
-        (err, row) => {
-          const nextId = row && row.maxId ? row.maxId + 1 : 1;
+        (err, r) => {
+          const nextId = r && r.maxId ? r.maxId + 1 : 1;
 
           const sql = `
-          INSERT INTO request_from_sales
-          (request_id, product_id, product_name, requested_by, user_name, quantity, status, request_date, reason)
-          VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now','localtime'), ?)
+            INSERT INTO request_from_sales
+            (request_id, product_id, product_name, requested_by, user_name, quantity, status, request_date, reason)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now','localtime'), ?)
           `;
 
           db.run(
             sql,
-            [
-              nextId,
-              product_id,
-              productName,
-              user_id,
-              user_name,
-              quantity,
-              reason,
-            ],
+            [nextId, product_id, productName, user_id, user_name, quantity, reason],
             (err) => {
               if (err) {
-                return res
-                  .status(500)
-                  .send("Error creating request: " + err.message);
+                return res.status(500).send("Error creating request");
               }
-
               res.redirect("/dispatch");
-            },
+            }
           );
-        },
+        }
       );
-    },
+    }
   );
 });
 
@@ -796,6 +818,93 @@ app.get("/logs", authorize(["admin", "warehouse"]), (req, res) => {
       currentRoute: "/logs",
     });
   });
+});
+
+// --- หน้า Stock Adjustment ---
+app.get("/stock-adjustment", authorize(["admin", "warehouse"]), (req, res) => {
+  db.all(
+    `SELECT p.product_id, p.product_name, s.warehouse_qty
+     FROM products p
+     LEFT JOIN stock s ON p.product_id = s.product_id
+     ORDER BY p.product_name ASC`,
+    [],
+    (err, products) => {
+      res.render("stock-adjustment", {
+        title: "ปรับสต็อกสินค้า",
+        products,
+        currentRoute: "/stock-adjustment",
+      });
+    }
+  );
+});
+
+app.post("/adjust-stock", authorize(["admin", "warehouse"]), (req, res) => {
+  const { product_id, quantity, note } = req.body;
+
+  if (!product_id || quantity < 0) {
+    return res.status(400).send("ข้อมูลไม่ถูกต้อง");
+  }
+
+  // ตรวจสอบว่ามีสินค้าใน products หรือไม่
+  db.get(
+    "SELECT product_name FROM products WHERE product_id = ?",
+    [product_id],
+    (err, product) => {
+
+      if (err) return res.status(500).send("Database error");
+
+      if (!product) {
+        return res.send(
+          `<script>alert("ไม่พบสินค้านี้ในระบบ"); window.location='/stock-adjustment';</script>`
+        );
+      }
+
+      // ดึง stock ปัจจุบัน
+      db.get(
+        "SELECT warehouse_qty FROM stock WHERE product_id = ?",
+        [product_id],
+        (err, stockRow) => {
+
+          if (!stockRow) {
+            return res.send(
+              `<script>alert("สินค้าไม่มีอยู่ในคลัง"); window.location='/stock-adjustment';</script>`
+            );
+          }
+
+          const oldStock = stockRow.warehouse_qty;
+          const newStock = parseInt(quantity);
+          const diff = newStock - oldStock;
+
+          // ถ้าเพิ่มสต๊อกให้ใส่ +
+          const displayQty = diff > 0 ? `+${diff}` : diff;
+
+          db.run(
+            `UPDATE stock SET warehouse_qty = ? WHERE product_id = ?`,
+            [newStock, product_id],
+            function (err) {
+
+              if (err) return res.status(500).send("ไม่สามารถปรับสต็อกได้");
+
+              const userId = req.session.user.user_id;
+
+              logTransaction(
+                product_id,
+                product.product_name,
+                "adjust",
+                displayQty,
+                note || "ปรับสต็อกสินค้า",
+                userId
+              );
+
+              res.redirect("/stock-adjustment");
+            }
+          );
+
+        }
+      );
+
+    }
+  );
 });
 
 app.listen(port, () =>
