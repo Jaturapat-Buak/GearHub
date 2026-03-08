@@ -137,6 +137,14 @@ placeholder="เช่น ตรวจนับสินค้า / ของเ
 <script src="/js/script.js"></script>
 
 <script>
+    const urlParams = new URLSearchParams(window.location.search)
+        const product = urlParams.get("product")
+
+        if(product){
+            const input = document.getElementById("product_input")
+            input.value = product
+            validateProduct()
+        }
     function validateProduct(){
         const input = document.getElementById("product_input")
         const options = document.getElementById("productOptions").options
@@ -153,17 +161,16 @@ placeholder="เช่น ตรวจนับสินค้า / ของเ
                 break
             }
             }
-            if(found){
-                error.classList.add("d-none")
-                submitBtn.disabled = false
-            }else{
-                error.classList.remove("d-none")
-                submitBtn.disabled = true
-                hiddenId.value = ""
-                stockBox.value = "-"
-            }
+        if(found){
+            error.classList.add("d-none")
+            submitBtn.disabled = false
+        }else{
+            error.classList.remove("d-none")
+            submitBtn.disabled = true
+            hiddenId.value = ""
+            stockBox.value = "-"
+        }
     }
-
 </script>
 
 </body>

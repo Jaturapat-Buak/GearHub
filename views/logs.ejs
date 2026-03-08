@@ -121,10 +121,14 @@
                       <% } %>
                     </td>
                     <td class="text-center">
-                      <% if (log.quantity > 0) { %>
-                        +<%= log.quantity %>
-                      <% } else { %>
-                        <%= log.quantity %>
+                      <% if(log.transaction_type === "adjust"){ %>
+                          <% if(log.quantity > 0){ %>
+                              +<%= log.quantity %>
+                          <% }else{ %>
+                              <%= log.quantity %>
+                          <% } %>
+                      <% }else{ %>
+                          <%= Math.abs(log.quantity) %>
                       <% } %>
                     </td>
                     <td>

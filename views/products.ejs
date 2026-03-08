@@ -259,7 +259,33 @@
                                                 </li>
 
                                                 <% } %>
+                                                
+                                                <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="/receive?product=<%= p.product_name %>">
+                                                    <i class="bi bi-box-arrow-in-down text-success me-2"></i>
+                                                    รับสินค้า
+                                                    </a>
+                                                </li>
+                                                <% } %>
 
+                                                <% if(user.role === 'admin' || user.role === 'sales'){ %>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="/dispatch?product=<%= p.product_name %>">
+                                                    <i class="bi bi-box-arrow-up text-danger me-2"></i>
+                                                    เบิกสินค้า
+                                                    </a>
+                                                </li>
+                                                <% } %>
+
+                                                <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+                                                <li>
+                                                    <a class="dropdown-item py-2" href="/stock-adjustment?product=<%= p.product_name %>">
+                                                    <i class="bi bi-sliders text-warning me-2"></i>
+                                                    ปรับสต็อก
+                                                    </a>
+                                                </li>
+                                                <% } %>
 
                                                 <li>
                                                     <hr class="dropdown-divider">

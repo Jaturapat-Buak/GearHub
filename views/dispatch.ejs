@@ -56,13 +56,23 @@
                                     <option
                                         data-id="<%= product.product_id %>"
                                         data-max="<%= product.warehouse_qty %>"
-                                        value="<%= product.product_name %> (คงเหลือ: <%= product.warehouse_qty %>)"
+                                        value="<%= product.product_name %>"
                                     >
                                 <% }) %>
                             </datalist>
-
+                            </div>
                             <input type="hidden" name="product_id" id="selected_product_id">
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label">จำนวนที่มีในคลัง</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="current_stock"
+                                    readonly
+                                    placeholder="-"
+                                    >
+                            </div>
+                        
 
                         <!-- Quantity -->
                         <div class="mb-3">
@@ -130,7 +140,6 @@
 <script src="/js/dispatch.js"></script>
 
 <script>
-
 let maxStock = 0
 let productValid = false
 let qtyValid = false
@@ -142,21 +151,25 @@ function validateProduct(){
     const options = document.getElementById("productOptions").options
     const error = document.getElementById("product_error")
     const hiddenId = document.getElementById("selected_product_id")
+    const stockBox = document.getElementById("current_stock")
 
     productValid = false
 
     for(let i = 0; i < options.length; i++){
 
-        if(options[i].value === input.value){
+    const productName = options[i].value.split(" (")[0]
 
-            hiddenId.value = options[i].dataset.id
-            maxStock = parseInt(options[i].dataset.max)
+    if(productName === input.value){
 
-            productValid = true
-            break
-        }
+        hiddenId.value = options[i].dataset.id
+        maxStock = parseInt(options[i].dataset.max)
+        stockBox.value = maxStock
 
+        productValid = true
+        break
     }
+
+}
 
     if(productValid){
 
@@ -166,6 +179,7 @@ function validateProduct(){
 
         error.classList.remove("d-none")
         hiddenId.value = ""
+        stockBox.value = "-"
 
     }
 
@@ -221,6 +235,15 @@ function checkSubmit(){
     }
 
 }
+
+const urlParams = new URLSearchParams(window.location.search)
+        const product = urlParams.get("product")
+
+        if(product){
+            const input = document.getElementById("product_input")
+            input.value = product
+            validateProduct()
+        }
 
 </script>
 
