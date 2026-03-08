@@ -1,18 +1,25 @@
 {
-  "name": "2",
+  "name": "dev",
   "version": "1.0.0",
-  "description": "",
+  "description": "npm i express ejs sqlite3 express-session",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaturapat-Buak/GearHub.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Jaturapat-Buak/GearHub/issues"
+  },
+  "homepage": "https://github.com/Jaturapat-Buak/GearHub#readme",
   "dependencies": {
-    "body-parser": "^2.2.2",
-    "ejs": "^4.0.1",
+    "ejs": "^5.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "sqlite3": "^5.1.7"
