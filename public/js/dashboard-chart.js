@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const datasets = chartData.map((item, index) => {
         const percentage = totalInventory > 0 ? ((item.total_stock / totalInventory) * 100).toFixed(1) : 0;
-        
+
         return {
             label: item.category_name,
             data: [parseFloat(percentage)],

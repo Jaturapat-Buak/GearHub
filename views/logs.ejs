@@ -1,156 +1,131 @@
-<!-- แสดงผลหน้า logs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Stock Logs</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
-  <link rel="stylesheet" href="/css/styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <meta charset="UTF-8" />
+    <title>Stock Logs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-
 <body class="bg-light">
-
-  <%- include('partials/sidebar') %>
-
-  <div id="main-content" class="main-content">
-
-    <%- include('partials/navbar') %>
-
-    <div class="container-fluid mt-4">
-
-      <div class="card shadow-sm">
-
-        <div class="card-body">
-
-          <h4 class="mb-4">
-            <i class="bi bi-clock-history"></i>
-            ประวัติการทำรายการสต็อก
-          </h4>
-
-          <form method="GET" action="/logs" class="row g-2 mb-3">
-
-            <div class="col-md-4">
-              <input
-                type="text"
-                name="search"
-                class="form-control"
-                placeholder="🔍 ค้นหาสินค้า"
-                value="<%= searchQuery %>"
-              />
+    <%- include('partials/sidebar') %>
+    <div id="main-content" class="main-content">
+        <%- include('partials/navbar') %>
+        <div class="container-fluid mt-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="mb-4">
+                        <i class="bi bi-clock-history"></i>
+                        ประวัติการทำรายการสต็อก
+                    </h4>
+                    <form method="GET" action="/logs" class="row g-2 mb-3" autocomplete="off">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="🔍 ค้นหาสินค้า"
+                                value="<%= searchQuery %>" />
+                        </div>
+                        <div class="col-md-3">
+                            <select name="type" class="form-select">
+                                <option value="">ประเภททั้งหมด</option>
+                                <option value="receive" <%=selectedType=='receive' ? 'selected' : '' %>>
+                                    รับสินค้า
+                                </option>
+                                <option value="dispatch" <%=selectedType=='dispatch' ? 'selected' : '' %>>
+                                    เบิกสินค้า
+                                </option>
+                                <option value="adjust" <%=selectedType=='adjust' ? 'selected' : '' %>>
+                                    ปรับสต็อก
+                                </option>
+                                <option value="add" <%=selectedType=='add' ? 'selected' : '' %>>
+                                    เพิ่มสินค้า
+                                </option>
+                                <option value="edit" <%=selectedType=='edit' ? 'selected' : '' %>>
+                                    แก้ไขสินค้า
+                                </option>
+                                <option value="delete" <%=selectedType=='delete' ? 'selected' : '' %>>
+                                    ลบสินค้า
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i>
+                                ค้นหา
+                            </button>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-dark text-center">
+                                <tr>
+                                    <th style="width:80px">ID</th>
+                                    <th>สินค้า</th>
+                                    <th style="width:150px">ประเภท</th>
+                                    <th style="width:100px">จำนวน</th>
+                                    <th style="width:180px">ผู้ทำรายการ</th>
+                                    <th>รายละเอียด</th>
+                                    <th style="width:180px">วันที่</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% logs.forEach(log=> { %>
+                                    <tr>
+                                        <td class="text-center">
+                                            <%= log.transaction_id %>
+                                        </td>
+                                        <td>
+                                            <%= log.product_name || '-' %>
+                                        </td>
+                                        <td class="text-center">
+                                            <% if (log.transaction_type==='receive' ) { %>
+                                                <span class="badge bg-success">รับสินค้า</span>
+                                                <% } %>
+                                            <% if (log.transaction_type==='dispatch' ) { %>
+                                                    <span class="badge bg-danger">เบิกสินค้า</span>
+                                                <% } %>
+                                            <% if (log.transaction_type==='adjust' ) { %>
+                                                    <span class="badge bg-warning text-dark">ปรับสต็อก</span>
+                                                <% } %>
+                                            <% if (log.transaction_type==='add' ) { %>
+                                                    <span class="badge bg-primary">เพิ่มสินค้า</span>
+                                                <% } %>
+                                            <% if (log.transaction_type==='edit' ) { %>
+                                                    <span class="badge bg-info text-dark">แก้ไขสินค้า</span>
+                                            <% } %>
+                                            <% if (log.transaction_type==='delete' ) { %>
+                                                    <span class="badge bg-secondary">ลบสินค้า</span>
+                                                <% } %>
+                                        </td>
+                                        <td class="text-center">
+                                            <% if(log.transaction_type==="adjust" ){ %>
+                                                <% if(log.quantity> 0){ %>
+                                                    +<%= log.quantity %>
+                                                <% }else{ %>
+                                                    <%= log.quantity %>
+                                                <% } %>
+                                                <% }else{ %>
+                                                    <%= Math.abs(log.quantity) %>
+                                                <% } %>
+                                        </td>
+                                        <td>
+                                            <i class="bi bi-person-circle"></i>
+                                            <%= log.user_name || 'System' %>
+                                        </td>
+                                        <td>
+                                            <%= log.reference_note %>
+                                        </td>
+                                        <td class="text-center">
+                                            <%= log.transaction_date %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-
-            <div class="col-md-3">
-              <select name="type" class="form-select">
-
-                <option value="">ประเภททั้งหมด</option>
-
-                <option value="receive" <%= selectedType == 'receive' ? 'selected' : '' %>>
-                  รับสินค้า
-                </option>
-
-                <option value="dispatch" <%= selectedType == 'dispatch' ? 'selected' : '' %>>
-                  เบิกสินค้า
-                </option>
-
-                <option value="adjust" <%= selectedType == 'adjust' ? 'selected' : '' %>>
-                  ปรับสต็อก
-                </option>
-
-                <option value="add" <%= selectedType == 'add' ? 'selected' : '' %>>
-                  เพิ่มสินค้า
-                </option>
-
-                <option value="delete" <%= selectedType == 'delete' ? 'selected' : '' %>>
-                  ลบสินค้า
-                </option>
-
-              </select>
-            </div>
-
-            <div class="col-md-2">
-              <button class="btn btn-primary w-100">
-                <i class="bi bi-search"></i>
-                ค้นหา
-              </button>
-            </div>
-
-          </form>
-
-          <div class="table-responsive">
-
-            <table class="table table-hover table-bordered align-middle">
-
-              <thead class="table-dark text-center">
-                <tr>
-                  <th style="width:80px">ID</th>
-                  <th>สินค้า</th>
-                  <th style="width:150px">ประเภท</th>
-                  <th style="width:100px">จำนวน</th>
-                  <th style="width:180px">ผู้ทำรายการ</th>
-                  <th>รายละเอียด</th>
-                  <th style="width:180px">วันที่</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% logs.forEach(log => { %>
-                  <tr>
-                    <td class="text-center">
-                      <%= log.transaction_id %>
-                    </td>
-                    <td>
-                      <%= log.product_name || '-' %>
-                    </td>
-                    <td class="text-center">
-                      <% if (log.transaction_type === 'receive') { %>
-                        <span class="badge bg-success">รับสินค้า</span>
-                      <% } %>
-                      <% if (log.transaction_type === 'dispatch') { %>
-                        <span class="badge bg-danger">เบิกสินค้า</span>
-                      <% } %>
-                      <% if (log.transaction_type === 'adjust') { %>
-                        <span class="badge bg-warning text-dark">ปรับสต็อก</span>
-                      <% } %>
-                      <% if (log.transaction_type === 'add') { %>
-                        <span class="badge bg-primary">เพิ่มสินค้า</span>
-                      <% } %>
-                      <% if (log.transaction_type === 'delete') { %>
-                        <span class="badge bg-secondary">ลบสินค้า</span>
-                      <% } %>
-                    </td>
-                    <td class="text-center">
-                      <% if(log.transaction_type === "adjust"){ %>
-                          <% if(log.quantity > 0){ %>
-                              +<%= log.quantity %>
-                          <% }else{ %>
-                              <%= log.quantity %>
-                          <% } %>
-                      <% }else{ %>
-                          <%= Math.abs(log.quantity) %>
-                      <% } %>
-                    </td>
-                    <td>
-                      <i class="bi bi-person-circle"></i>
-                      <%= log.user_name || 'System' %>
-                    </td>
-                    <td>
-                      <%= log.reference_note %>
-                    </td>
-                    <td class="text-center">
-                      <%= log.transaction_date %>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
+    <script src="/js/script.js"></script>
 </body>
 </html>
-
-<script src="/js/script.js"></script>

@@ -1,26 +1,20 @@
 <nav id="sidebar" class="sidebar d-flex flex-column">
-
     <div class="brand-logo">
         <div class="logo-wrapper">
             <i class="bi bi-box-seam text-info fs-3"></i>
             <span class="brand-text">Gear Hub</span>
         </div>
-
         <button id="toggle-sidebar" class="sidebar-toggle">
             <i class="bi bi-list"></i>
         </button>
     </div>
-
-
     <ul class="sidebar-menu mt-3 flex-grow-1">
-
         <li class="<%= currentRoute === '/' ? 'active' : '' %>">
             <a href="/">
                 <i class="bi bi-columns-gap"></i>
                 <span class="menu-text">แดชบอร์ด</span>
             </a>
         </li>
-
 
         <% if(user.role === 'admin' || user.role === 'warehouse' || user.role === 'sales'){ %>
         <li class="<%= currentRoute === '/products' ? 'active' : '' %>">
@@ -31,7 +25,6 @@
         </li>
         <% } %>
 
-
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
         <li class="<%= currentRoute === '/receive' ? 'active' : '' %>">
             <a href="/receive">
@@ -41,7 +34,6 @@
         </li>
         <% } %>
 
-
         <% if(user.role === 'admin' || user.role === 'sales'){ %>
         <li class="<%= currentRoute === '/dispatch' ? 'active' : '' %>">
             <a href="/dispatch">
@@ -50,13 +42,30 @@
             </a>
         </li>
         <% } %>
-        
 
         <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
         <li class="<%= currentRoute === '/stock-adjustment' ? 'active' : '' %>">
             <a href="/stock-adjustment">
                 <i class="bi bi-sliders"></i>
                 <span class="menu-text">ปรับสต็อกสินค้า</span>
+            </a>
+        </li>
+        <% } %>
+
+        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
+        <li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
+            <a href="/requests">
+                <i class="bi bi-clipboard2-check"></i>
+                <span class="menu-text">จัดการคำขอ</span>
+            </a>
+        </li>
+        <% } %>
+
+        <% if(user.role === 'admin'){ %>
+        <li class="<%= currentRoute === '/users' ? 'active' : '' %>">
+            <a href="/users">
+                <i class="bi bi-people"></i>
+                <span class="menu-text">จัดการผู้ใช้</span>
             </a>
         </li>
         <% } %>
@@ -70,27 +79,6 @@
         </li>
         <% } %>
 
-
-        <% if(user.role === 'admin' || user.role === 'warehouse'){ %>
-        <li class="<%= currentRoute === '/requests' ? 'active' : '' %>">
-            <a href="/requests">
-                <i class="bi bi-clipboard2-check"></i>
-                <span class="menu-text">จัดการคำขอ</span>
-            </a>
-        </li>
-        <% } %>
-
-
-        <% if(user.role === 'admin'){ %>
-        <li class="<%= currentRoute === '/users' ? 'active' : '' %>">
-            <a href="/users">
-                <i class="bi bi-people"></i>
-                <span class="menu-text">จัดการผู้ใช้</span>
-            </a>
-        </li>
-        <% } %>
-
-
         <% if(user.role === 'admin'){ %>
         <li class="<%= currentRoute === '/logs' ? 'active' : '' %>">
             <a href="/logs">
@@ -99,22 +87,17 @@
             </a>
         </li>
         <% } %>
-
     </ul>
 
 
-
     <div class="sidebar-footer border-top p-3">
-
         <div class="dropup">
-
             <div 
                 class="d-flex align-items-center cursor-pointer"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
                 style="cursor: pointer;"
             >
-
                 <div class="avatar-sm me-2">
                     <img 
                         src="https://ui-avatars.com/api/?name=<%= user ? user.full_name : 'User' %>&background=0ea5e9&color=fff"
@@ -124,7 +107,6 @@
                         alt="user"
                     >
                 </div>
-
                 <div class="user-info overflow-hidden">
                     <p class="mb-0 small fw-bold text-truncate">
                         <%= user ? user.full_name : 'Guest' %>
@@ -133,10 +115,7 @@
                         <%= user ? user.role.toUpperCase() : '' %>
                     </p>
                 </div>
-
             </div>
-
-
             <ul class="dropdown-menu shadow border-0 mb-2">
                 <li>
                     <a class="dropdown-item text-danger d-flex align-items-center" href="/logout">
@@ -145,9 +124,6 @@
                     </a>
                 </li>
             </ul>
-
         </div>
-
     </div>
-
 </nav>

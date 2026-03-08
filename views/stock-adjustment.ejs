@@ -2,176 +2,72 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Gear Hub - <%= title %></title>
-
+    <title>Gear Hub - <%= title %>
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/styles.css">
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-
 <body>
-
-<%- include('partials/sidebar') %>
-
-<div id="main-content" class="main-content">
-
-<%- include('partials/navbar') %>
-
-<div class="container-fluid p-4">
-
-<div class="row justify-content-center">
-
-<div class="col-md-6">
-
-<div class="card border-0 shadow-sm p-4">
-
-<h4 class="fw-bold mb-4 text-warning">
-<i class="bi bi-sliders"></i> ปรับสต็อกสินค้า
-</h4>
-
-<form action="/adjust-stock" method="POST" autocomplete="off">
-
-<div class="mb-3">
-<label class="form-label">เลือกสินค้า</label>
-
-<input 
-id="product_input"
-class="form-control"
-list="productOptions"
-name="product_name_input"
-placeholder="พิมพ์ชื่อสินค้า..."
-oninput="validateProduct()"
-required
->
-
-<div id="product_error" class="form-text text-danger d-none">
-ไม่พบสินค้าในระบบ
-</div>
-
-<datalist id="productOptions">
-
-<% products.forEach(product => { %>
-
-<option 
-data-id="<%= product.product_id %>"
-value="<%= product.product_name %>"
-data-stock="<%= product.warehouse_qty || 0 %>"
->
-
-<% }) %>
-
-</datalist>
-
-<input type="hidden" name="product_id" id="selected_product_id">
-
-</div>
-
-
-<div class="mb-3">
-<label class="form-label">สต็อกปัจจุบัน</label>
-
-<input 
-type="text"
-class="form-control"
-id="current_stock"
-readonly
-placeholder="-"
->
-
-</div>
-
-
-<div class="mb-3">
-<label class="form-label">จำนวนใหม่</label>
-
-<input 
-type="number"
-class="form-control"
-name="quantity"
-required
-min="0"
-placeholder="0"
->
-</div>
-
-
-<div class="mb-4">
-<label class="form-label">หมายเหตุ / เหตุผล</label>
-
-<input 
-type="text"
-class="form-control"
-name="note"
-placeholder="เช่น ตรวจนับสินค้า / ของเสีย / ปรับยอด"
->
-</div>
-
-
-<div class="d-grid gap-2">
-
-<button id="submit_btn" type="submit" class="btn btn-warning py-2 fw-bold">
-บันทึกการปรับสต็อก
-</button>
-
-<a href="/" class="btn btn-light py-2">
-ยกเลิก
-</a>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<script src="/js/script.js"></script>
-
-<script>
-    const urlParams = new URLSearchParams(window.location.search)
-        const product = urlParams.get("product")
-
-        if(product){
-            const input = document.getElementById("product_input")
-            input.value = product
-            validateProduct()
-        }
-    function validateProduct(){
-        const input = document.getElementById("product_input")
-        const options = document.getElementById("productOptions").options
-        const error = document.getElementById("product_error")
-        const submitBtn = document.getElementById("submit_btn")
-        const hiddenId = document.getElementById("selected_product_id")
-        const stockBox = document.getElementById("current_stock")
-        let found = false
-        for(let i=0;i<options.length;i++){
-            if(options[i].value === input.value){
-                hiddenId.value = options[i].dataset.id
-                stockBox.value = options[i].dataset.stock
-                found = true
-                break
-            }
-            }
-        if(found){
-            error.classList.add("d-none")
-            submitBtn.disabled = false
-        }else{
-            error.classList.remove("d-none")
-            submitBtn.disabled = true
-            hiddenId.value = ""
-            stockBox.value = "-"
-        }
-    }
-</script>
-
+    <%- include('partials/sidebar') %>
+    <div id="main-content" class="main-content">
+        <%- include('partials/navbar') %>
+        <div class="container-fluid p-4">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm p-4">
+                        <h4 class="fw-bold mb-4 text-warning">
+                            <i class="bi bi-sliders"></i> ปรับสต็อกสินค้า
+                        </h4>
+                        <form action="/adjust-stock" method="POST" autocomplete="off">
+                            <div class="mb-3">
+                                <label class="form-label">เลือกสินค้า</label>
+                                <input id="product_input" class="form-control" list="productOptions"
+                                    name="product_name_input" placeholder="พิมพ์ชื่อสินค้า..."
+                                    oninput="validateProduct()" required>
+                                <div id="product_error" class="form-text text-danger d-none">
+                                    ไม่พบสินค้าในระบบ
+                                </div>
+                                <datalist id="productOptions">
+                                    <% products.forEach(product=> { %>
+                                        <option data-id="<%= product.product_id %>"
+                                            value="<%= product.product_name %>"
+                                            data-stock="<%= product.warehouse_qty || 0 %>">
+                                            <% }) %>
+                                </datalist>
+                                <input type="hidden" name="product_id" id="selected_product_id">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">สต็อกปัจจุบัน</label>
+                                <input type="text" class="form-control" id="current_stock" readonly
+                                    placeholder="-">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">จำนวนใหม่</label>
+                                <input type="number" class="form-control" name="quantity" required min="0"
+                                    placeholder="0">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">หมายเหตุ / เหตุผล</label>
+                                <input type="text" class="form-control" name="note"
+                                    placeholder="เช่น ตรวจนับสินค้า / ของเสีย / ปรับยอด">
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button id="submit_btn" type="submit" class="btn btn-warning py-2 fw-bold">
+                                    บันทึกการปรับสต็อก
+                                </button>
+                                <a href="/" class="btn btn-light py-2">
+                                    ยกเลิก
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <script src="/js/script.js"></script>
+        <script src="/js/stock-adjust.js"></script>
 </body>
 </html>
