@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("load", function () {
     //กราฟแท่งแนวตั้ง (Bar Chart)
     const barCtx = document.getElementById("reportBarChart").getContext("2d");
     new Chart(barCtx, {
